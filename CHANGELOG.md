@@ -50,6 +50,12 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `app/orchestration/`: `router` (heuristic retrieval/synthesis/chitchat), `specialists` (LLM-synthesized or extractive fallback), `DefaultOrchestrator` (satisfies `Orchestrator`) — `handle(query) -> Answer` running input rail → route → memory context → specialist → output rail, emitting a `TraceEvent` at each step. Consumes `Retriever`/`Memory`/`Guardrail`; LLM optional.
   - `scripts/smoke.py --stage e2e`: ingest + orchestrated answer through the configured stack; the `memory` profile runs it with **zero keys/services/deps** (extractive answers). Trace shows the full `guardrail→route→memory→retrieval→guardrail→answer` flow.
   - 6 tests (router ≥9/10, grounded answer with citations, injection blocked, chitchat, ≥3 trace events, memory records both turns); 56 total. mypy + ruff clean.
+- **Wave 1 — Eval layer (completes Wave 1).**
+  - `app/eval/metrics.py`: RAGAS-style lexical metrics — faithfulness, answer-relevance, context-precision (each `[0,1]`).
+  - `app/eval/evaluator.py`: `RagasEvaluator` (satisfies `Evaluator`) — fills row scores, optional LLM-as-judge; `summary()` + `to_csv()`.
+  - `app/eval/runner.py`: `answer_rows()` (run questions through the orchestrator) + `report()`.
+  - `app/eval/dataset.py` + `scripts/make_eval_set.py`: corpus-agnostic seed-set generation (LLM writes the exam; degenerate fallback offline).
+  - 8 tests + a real offline eval run (generate → answer → score); 64 total. mypy + ruff clean.
 
 ### Notes
 

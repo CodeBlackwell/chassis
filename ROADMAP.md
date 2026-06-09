@@ -33,7 +33,9 @@ Each owns one `app/*` package and codes against the frozen contracts.
 - **Orchestration** (`app/orchestration/`) — DONE. `router` + `specialists` (LLM or extractive) + `DefaultOrchestrator` (input rail → route → memory → specialist → output rail → `Answer`, emits trace). `smoke --stage e2e` runs offline. 6 tests. Contract: `Orchestrator`.
 - **Memory** (`app/memory/`) — DONE. `BufferMemory` — deque window + long-term vector recall (evicted turns stay findable) + summarize-on-overflow (LLM optional). 6 offline tests. Contract: `Memory`.
 - **Guardrails** (`app/guardrails/`) — DONE. `checks.py` (pure length/injection/PII/grounding) + `DefaultGuardrail` (refuse-by-default input rail, grounded output rail, optional LLM judge). 9 offline tests. Contract: `Guardrail` (recon §1; the marquee layer).
-- **Eval** (`app/eval/`) — RAGAS-style faithfulness / answer-relevance / context-precision + judge + runner + `scripts/make_eval_set.py` (corpus-agnostic goldens). Contract: `Evaluator` (recon §6).
+- **Eval** (`app/eval/`) — DONE. `metrics` (faithfulness/answer-relevance/context-precision) + `RagasEvaluator` (+ optional judge, summary, CSV) + `runner` + `dataset`/`make_eval_set.py` (corpus-agnostic goldens). 8 tests. Contract: `Evaluator` (recon §6).
+
+**Wave 1 complete.** All four domain layers built, tested offline, contract-conformant.
 
 ## Wave 2 — UI
 
