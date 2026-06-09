@@ -39,6 +39,11 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - Both compose files validate (`docker compose config`); `just --list` + `just ingest` run. The app server CMD (`app.ui`) goes live with the Wave 2 dashboard.
   - Qdrant URL now comes from `QDRANT_URL` env (not baked in the profile) so the in-container hostname wires correctly.
 
+- **Wave 1 — Guardrails layer.**
+  - `app/guardrails/checks.py`: pure `(passed, reason)` checks — length cap, **named** prompt-injection classes (system-prompt override, role injection, authority escalation, hypothetical jailbreak, context escape), PII regexes (email/phone/api-key), and lexical grounding.
+  - `app/guardrails/guard.py`: `DefaultGuardrail` (satisfies `Guardrail`) — refuse-by-default input rail, non-empty + grounded output rail, plus an optional LLM safety judge. Deterministic without an LLM, so it tests fully offline.
+  - 9 tests (each attack class blocked, benign passes, PII/length blocks, grounding, judge safe/unsafe via a fake LLM); 44 total. mypy + ruff clean.
+
 ### Notes
 
 - Contracts are **re-frozen** as of the `GraphStore` addition (2026-06-09). No further changes in flight; future extension happens via adapters, not contract edits.
