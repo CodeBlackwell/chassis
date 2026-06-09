@@ -37,10 +37,10 @@ services:
 down:
     docker compose down
 
-# run the app locally (Gradio dashboard — lands in Wave 2)
+# run the dashboard locally (four-tab Gradio app on :8000)
 dev:
     -lsof -ti :8000 | xargs kill -9 2>/dev/null
-    uv run python -m app.ui
+    uv run --extra ui python -m app.ui
 
 # build the app image
 build:

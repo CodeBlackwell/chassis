@@ -8,9 +8,11 @@ A contracts-first base repo for sophisticated multi-agent RAG projects. Not a si
 
 The flexibility mechanism in one sentence: `lib/contracts.py` defines what each layer must do, the `lib/*/` adapters implement it, a registry picks one from config, and named profiles switch a whole backend with a single flag.
 
-## Status: skeleton
+## Status
 
-Present: the directory tree, the **frozen contracts** (`lib/contracts.py`), and `docs/`. Deferred (named, with homes): `lib/registry.py`, `lib/trace.py`, `config/settings.py`, all adapters, `lib/ingestion/`, every `app/*` layer, `scripts/`, the Ralph harness, `docker-compose`/`Dockerfile`/`justfile`, and `tests/`. See [ROADMAP.md](ROADMAP.md) for the build order and [CHANGELOG.md](CHANGELOG.md) for what has shipped.
+Built and verified offline (71 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `ingestion` + `SimpleRetriever`; the full ingest + e2e smoke gates; docker/justfile; all four Wave 1 layers (`guardrails`, `memory`, `orchestration`, `eval`); and the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place) and the Ralph build harness. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
+
+The whole system runs with **zero keys/services/deps** via the `memory` profile; swap to the real stack by changing one profile flag.
 
 ## Layout
 
@@ -25,15 +27,18 @@ docs/    architecture, extensibility, stack matrix, dated reference docs
 
 ## Commands
 
-Tooling mirrors the workspace house style (uv + hatchling). A `justfile` is deferred; until then:
+Tooling mirrors the workspace house style (uv + hatchling). The `justfile` carries the recipe set (`just --list`):
 
 ```bash
-uv sync                              # install (dev group: ruff, mypy, pytest)
-python -c "import lib.contracts"     # contracts import clean
-uvx mypy lib                         # typecheck (must stay clean)
+just setup                           # uv sync (dev group: ruff, mypy, pytest)
+just test                            # pytest
+just lint                            # ruff + mypy (must stay clean)
+just ingest <folder>                 # ingest a corpus (default: memory profile)
+just dev                             # launch the dashboard on :8000 (--extra ui)
+uv run python scripts/smoke.py --stage e2e --corpus <folder> --profile memory
 ```
 
-The deferred `justfile` will carry the house recipe set: `default` (list), `setup`, `services`, `dev` (port-kill + run), `test`, `lint`, `ingest <folder>`, `eval`, `smoke`, `build`, `deploy`, `logs`, `clean`. See the recon plan §3.
+Adapter deps are `[project.optional-dependencies]` groups — `uv sync` installs the light base; add `--extra ui` / `--extra embeddings-sbert` etc. for a real stack.
 
 ## Architecture
 

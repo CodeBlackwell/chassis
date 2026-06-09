@@ -56,6 +56,10 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `app/eval/runner.py`: `answer_rows()` (run questions through the orchestrator) + `report()`.
   - `app/eval/dataset.py` + `scripts/make_eval_set.py`: corpus-agnostic seed-set generation (LLM writes the exam; degenerate fallback offline).
   - 8 tests + a real offline eval run (generate → answer → score); 64 total. mypy + ruff clean.
+- **Wave 2 — Gradio dashboard + theme.**
+  - `app/ui/`: `theme.py` + `tokens.json` (METHODPROOF SHOMEN/KINMYAKU, CSS-variable injection), `format.py` (pure trace/sources/guardrail/eval table helpers), `app.py` (`build_app` — four tabs Chat/Sources/Guardrails/Eval, Gradio lazy-imported, layers injected), `__main__.py` (`python -m app.ui` wires the configured stack and launches on :8000).
+  - `gradio` added as the `ui` optional dep; the Dockerfile default `EXTRAS` and `just dev` now build/serve it.
+  - 7 tests (tokens, CSS light/dark, table formatters, real `build_app` construction); launch verified (HTTP 200). 71 total. mypy + ruff clean.
 
 ### Notes
 

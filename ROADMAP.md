@@ -37,11 +37,11 @@ Each owns one `app/*` package and codes against the frozen contracts.
 
 **Wave 1 complete.** All four domain layers built, tested offline, contract-conformant.
 
-## Wave 2 — UI
+## Wave 2 — UI (DONE)
 
-- **`app/ui/`** — Gradio four-tab dashboard (Chat, Sources, Guardrails, Eval) reading the trace ring buffer on a timer.
-- **Theming** — `app/ui/tokens.json` + `app/ui/theme.py` injecting CSS variables; METHODPROOF default (recon §9).
-- **Data viz** — tables first; one embedded D3 router→specialist handoff swimlane as the centerpiece (recon §10). Resist building all four fancy.
+- **`app/ui/`** — Gradio four-tab dashboard (Chat, Sources, Guardrails, Eval); `build_app` injects the orchestrator + trace bus + eval_fn; `python -m app.ui` launches on :8000. Construction tested + launch verified (HTTP 200).
+- **Theming** — `tokens.json` + `theme.py` inject CSS variables; METHODPROOF SHOMEN/KINMYAKU default. `CHASSIS_THEME=dark` flips it.
+- **Data viz** — tables/markdown shipped (the YAGNI line held). A single embedded D3 router→specialist handoff swimlane remains an optional enhancement (recon §10).
 
 ## Options (off by default; build on a trigger)
 

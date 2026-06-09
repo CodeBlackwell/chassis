@@ -20,6 +20,7 @@ vectorstore-qdrant = ["qdrant-client"]
 vectorstore-chroma = ["chromadb"]
 vectorstore-faiss = ["faiss-cpu", "numpy"]
 ingestion = ["pypdf"]
+ui = ["gradio"]
 
 [build-system]
 requires = ["hatchling"]
