@@ -46,7 +46,7 @@ Read [docs/architecture.md](docs/architecture.md) — repo map, the flexibility 
 
 ## Frozen contracts — the prime directive
 
-`lib/contracts.py` is frozen. Adapters and app layers code against it and never propose changes mid-build. If a contract seems wrong, log the complaint and work around it — contract churn is how parallel builds die. The only sanctioned change in flight is the deliberate, pre-build addition of a `GraphStore` + `HybridRetriever` for the knowledge-graph option (recon plan §8); make it once, then re-freeze.
+`lib/contracts.py` is frozen. Adapters and app layers code against it and never propose changes mid-build. If a contract seems wrong, log the complaint and work around it — contract churn is how parallel builds die. The one sanctioned pre-build addition (a `GraphStore` Protocol + `GraphNode`/`GraphEdge` for the knowledge-graph option, recon plan §8) was made 2026-06-09; contracts are **re-frozen** as of that change. No further edits in flight.
 
 To extend without touching contracts, see [docs/extensibility.md](docs/extensibility.md): add an adapter (implement the Protocol → one registry line → reference in a profile), add a profile, or re-skin into a new project.
 

@@ -6,6 +6,10 @@ layer is built: adapters and app layers code against them and never propose chan
 mid-build. If an implementation thinks a contract is wrong, it logs the complaint and
 works around it — contract churn is how parallel builds die.
 
+The knowledge-graph option (GraphNode / GraphEdge / GraphStore) was added 2026-06-09
+as the single deliberate pre-build extension (extensibility Move 2). Contracts are
+re-frozen as of that addition; no further changes in flight.
+
 Rules of engagement:
 - Sync everywhere. No async at this scale; it buys nothing and costs debugging time.
 - Dataclasses, not Pydantic, for the shared types. Pydantic is allowed inside
@@ -43,6 +47,20 @@ class Chunk:
 class SearchResult:
     chunk: Chunk
     score: float
+
+
+@dataclass
+class GraphNode:
+    id: str                  # matches the Chunk.id it was derived from
+    kind: str                # domain-defined: "document", "section", "function", ...
+    meta: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class GraphEdge:
+    source_id: str           # node id
+    target_id: str           # node id
+    kind: str                # domain-defined: "contains", "links_to", "calls", ...
 
 
 @dataclass
@@ -128,6 +146,21 @@ class VectorStore(Protocol):
         vector: list[float],
         k: int = 5,
     ) -> list[SearchResult]: ...
+
+
+class GraphStore(Protocol):
+    # Optional layer behind a HybridRetriever (vector hit -> graph-expand to
+    # connected nodes). Node ids match Chunk ids, so a vector hit maps to a graph
+    # seed. Default backend SQLite+NetworkX (in-process); Neo4j is the heavy option.
+    def upsert(self, nodes: Sequence[GraphNode], edges: Sequence[GraphEdge]) -> None: ...
+
+    def neighbors(
+        self,
+        node_id: str,
+        *,
+        kinds: Sequence[str] | None = None,
+        depth: int = 1,
+    ) -> list[GraphNode]: ...
 
 
 class Retriever(Protocol):

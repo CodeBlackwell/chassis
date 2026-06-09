@@ -80,6 +80,8 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | `LLMResponse` | dataclass | LLM output (text, model, token usage) |
 | `Chunk` | dataclass | a unit of ingested text (id, text, source, meta) |
 | `SearchResult` | dataclass | a chunk plus its similarity score |
+| `GraphNode` | dataclass | a node in the optional knowledge graph (id, kind, meta) |
+| `GraphEdge` | dataclass | a directed edge between two graph nodes (source_id, target_id, kind) |
 | `Turn` | dataclass | one conversational turn with a timestamp |
 | `MemoryContext` | dataclass | recent window + recalled hits + optional summary |
 | `Verdict` | dataclass | a guardrail decision (passed, stage, reasons) |
@@ -89,6 +91,7 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | `LLM` | Protocol | `chat(messages) -> LLMResponse` |
 | `Embedder` | Protocol | `dim`, `embed(texts) -> vectors` |
 | `VectorStore` | Protocol | `ensure_collection`, `upsert`, `search` |
+| `GraphStore` | Protocol | optional: `upsert(nodes, edges)`, `neighbors(node_id)` for graph-expand retrieval |
 | `Retriever` | Protocol | `retrieve(query, k) -> SearchResult[]` |
 | `Orchestrator` | Protocol | `handle(query) -> Answer` |
 | `Memory` | Protocol | `add(turn)`, `context(query) -> MemoryContext` |

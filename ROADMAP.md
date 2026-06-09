@@ -38,7 +38,7 @@ Each owns one `app/*` package and codes against the frozen contracts.
 
 ## Options (off by default; build on a trigger)
 
-- **Knowledge-graph retrieval** — add `GraphStore` Protocol + `HybridRetriever` (the one pre-build contract addition, then re-freeze). Default backend SQLite + NetworkX; Neo4j heavy option (recon §8; stack-matrix Retrieval row).
+- **Knowledge-graph retrieval** — contract done: `GraphNode`/`GraphEdge`/`GraphStore` added to `lib/contracts.py` and re-frozen. Remaining: a `GraphStore` adapter (default SQLite + NetworkX; Neo4j heavy option) + a `HybridRetriever` implementing `Retriever`, plus an `ingestion` step that emits nodes/edges and a `graphstore` registry slot + profile flag `retriever: vector|hybrid` (recon §8; stack-matrix Retrieval row).
 - **RAGAS library** eval, **Guardrails AI / NeMo**, **LangGraph / CrewAI** orchestration, **Redis** memory — each a registry/profile swap with a named trigger (stack-matrix).
 - **Figma workflow** — process, not code: `tokens.json` stays source of truth; use the figma skills to mirror tokens / push UI mockups (recon §11).
 
