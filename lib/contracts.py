@@ -16,8 +16,9 @@ Rules of engagement:
   guardrails for schema validation but never leaks into these contracts.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Literal, Protocol, Sequence
+from typing import Any, Literal, Protocol
 
 # ---------- shared types ----------
 

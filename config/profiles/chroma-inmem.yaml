@@ -1,0 +1,6 @@
+llm:         {impl: anthropic, model: claude-sonnet-4-6}
+embedder:    {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
+vectorstore: {impl: chroma}          # in-process, no service
+ingestion:   {chunk_size: 800, overlap: 120}
+retrieval:   {k: 5}
+memory:      {window: 8, recall_k: 3}

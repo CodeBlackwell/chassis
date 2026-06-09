@@ -14,6 +14,13 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
 - **Project docs.** `CLAUDE.md` (hub), `ROADMAP.md`, this `CHANGELOG.md`.
 - **Knowledge-graph contract (the one sanctioned pre-build addition).** `GraphNode`, `GraphEdge` dataclasses + a `GraphStore` Protocol (`upsert`, `neighbors`) in `lib/contracts.py`, enabling a future `HybridRetriever` (vector hit → graph-expand) behind the existing `Retriever` contract. No existing Protocol changed.
 
+- **Wave 0 core — the flexibility engine + trace bus.**
+  - `lib/registry.py`: `build(layer, name, **kwargs)` lazy-importlib factory + the full REGISTRY map (llm / embedder / vectorstore / graphstore). Referencing an unwritten adapter is fine until something builds it.
+  - `config/settings.py`: `Settings.load(profile)` resolves a profile YAML then applies `CHASSIS_<LAYER>_IMPL` env overrides (the live-pivot path); `.build(layer)` ties settings to the registry.
+  - `config/profiles/`: `qdrant-local`, `chroma-inmem`, `faiss-bare`.
+  - `lib/trace.py`: `TraceBus` — `deque(maxlen=500)` behind a lock + per-run JSONL sink; `emit()` and `recent(component_prefix=)`.
+  - Runtime deps added: `pyyaml`, `python-dotenv`. 13 offline tests; mypy + ruff clean.
+
 ### Notes
 
 - Contracts are **re-frozen** as of the `GraphStore` addition (2026-06-09). No further changes in flight; future extension happens via adapters, not contract edits.

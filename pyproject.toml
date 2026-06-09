@@ -3,7 +3,10 @@ name = "chassis"
 version = "0.0.1"
 description = "A flexible, contracts-first base repo for sophisticated multi-agent projects."
 requires-python = ">=3.11"
-dependencies = []  # skeleton pass: contracts use only stdlib (dataclasses, typing)
+dependencies = [
+    "pyyaml",        # profile loading
+    "python-dotenv", # .env -> env vars for the live-pivot overrides
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -26,6 +29,9 @@ src = ["lib", "app", "config", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [tool.mypy]
 python_version = "3.11"

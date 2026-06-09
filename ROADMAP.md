@@ -6,12 +6,14 @@ Build order for CHASSIS, by wave and layer. No dates — the workspace builds fa
 
 The boilerplate's load-bearing core. Everything else codes against it.
 
-- **Done:** frozen `lib/contracts.py`; flat layout; `pyproject.toml`; docs; `CLAUDE.md`/`CHANGELOG.md`/`ROADMAP.md`.
-- **Needed:**
-  - `config/settings.py` — `Settings.load(profile)` resolving a profile YAML then per-layer env overrides (recon §5; copy PROVE `settings.py`).
-  - `lib/registry.py` — `build(layer, name, **kwargs)` factory (recon §5; copy PROVE `client_factory.py`).
+- **Done:**
+  - frozen `lib/contracts.py`; flat layout; `pyproject.toml`; docs; `CLAUDE.md`/`CHANGELOG.md`/`ROADMAP.md`.
+  - `lib/registry.py` — `build(layer, name, **kwargs)` lazy-importlib factory; full REGISTRY map (llm/embedder/vectorstore/graphstore).
+  - `config/settings.py` — `Settings.load(profile)` merges profile YAML + per-layer `CHASSIS_<LAYER>_IMPL` env overrides (the live-pivot path); `.build(layer)` ties settings → registry.
   - `config/profiles/` — `qdrant-local.yaml`, `chroma-inmem.yaml`, `faiss-bare.yaml`.
-  - `lib/trace.py` — `TraceEvent` bus: `deque(maxlen=500)` behind a lock + JSONL sink (architecture doc).
+  - `lib/trace.py` — `TraceBus`: `deque(maxlen=500)` behind a lock + per-run JSONL sink; `emit()` / `recent(component_prefix=)`.
+  - Offline tests for all three (13) + `[tool.pytest] pythonpath`; mypy + ruff clean.
+- **Needed:**
   - `lib/llm/` — anthropic + openai + ollama adapters (`LLM` contract).
   - `lib/embeddings/` — sbert (minilm/bge) + openai (`Embedder`). Lock dim before ingest.
   - `lib/vectorstore/` — qdrant + chroma + faiss (`VectorStore`).
