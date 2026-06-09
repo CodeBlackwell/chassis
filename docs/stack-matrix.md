@@ -40,6 +40,18 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 
 > Coupling: this choice drives deployment. Qdrant → docker-compose. Chroma/FAISS → single Dockerfile or bare process.
 
+## Retrieval — contract: `Retriever` (+ optional `GraphStore`)
+
+Default retrieval is vector-only over the `VectorStore`. A knowledge-graph option adds structural recall (vector hit → graph-expand to connected nodes) behind the same `Retriever` contract, via a `HybridRetriever` and a new optional `GraphStore`. See [extensibility.md](extensibility.md) Move 2 — this is the one deliberate pre-build contract addition.
+
+| Option | Pros | Cons | Default? | Switch trigger |
+|--------|------|------|----------|----------------|
+| Vector-only | Simplest, one store, fewest moving parts | Misses structural/relational context | **Yes** | — |
+| Hybrid + SQLite/NetworkX graph | Connected-evidence recall, in-process, zero service, graceful-degrade to vector | Two stores to keep in sync; Python-side traversal | No | The corpus has real structure (code, entities, citations) worth traversing |
+| Hybrid + Neo4j graph | Native multi-hop + vector index in one engine, scales | A service to run; deployment weight | No | >100k chunks, or genuine multi-hop queries |
+
+> Coupling note: the graph backend follows the same service-vs-in-process split as the vector DB. SQLite/NetworkX stays bare; Neo4j needs a service.
+
 ## Memory — contract: `Memory`
 
 | Option | Pros | Cons | Default? | Switch trigger |
@@ -71,6 +83,18 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 | Gradio | Fastest to a working dashboard, trivial polling | Less layout control | **Yes** | — |
 | Streamlit | More layout control, familiar | Rerun model can fight live state | No | You need finer layout control |
 | FastAPI + React | Full control, production-grade | Far more build time | No | Only with spare time |
+
+## Theming — `tokens.json` → CSS custom properties injected into the UI
+
+Makes the demo look intentional instead of default-Gradio-grey. A single `tokens.json` is the source of truth; `app/ui/theme.py` loads it and injects CSS variables into Gradio's `Blocks(css=...)`. One `THEME` flag selects the palette; the node-color tokens double as the trace-event color encoding. Source themes live in `../THEMES/`.
+
+| Option | Pros | Cons | Default? | Switch trigger |
+|--------|------|------|----------|----------------|
+| METHODPROOF (SHOMEN/KINMYAKU) | Production-proven, dual light/dark, 5-color node palette maps to trace events, sharp/disciplined | Opinionated, formal | **Yes** | — |
+| Other workspace theme (ĀNUENUE, SHINKAI, …) | Same token shape, different mood (spectral, deep-sea, etc.) | One more palette to port | No | The domain wants a distinct aesthetic |
+| Default Gradio (no theme) | Zero work | Reads as a prototype, not a product | No | Throwaway/internal-only demo |
+
+> Keep it to one default theme + the swap mechanism. Porting all eight workspace themes is YAGNI.
 
 ## Deployment — driven by the vector DB choice
 
