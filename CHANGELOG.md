@@ -43,6 +43,9 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `app/guardrails/checks.py`: pure `(passed, reason)` checks — length cap, **named** prompt-injection classes (system-prompt override, role injection, authority escalation, hypothetical jailbreak, context escape), PII regexes (email/phone/api-key), and lexical grounding.
   - `app/guardrails/guard.py`: `DefaultGuardrail` (satisfies `Guardrail`) — refuse-by-default input rail, non-empty + grounded output rail, plus an optional LLM safety judge. Deterministic without an LLM, so it tests fully offline.
   - 9 tests (each attack class blocked, benign passes, PII/length blocks, grounding, judge safe/unsafe via a fake LLM); 44 total. mypy + ruff clean.
+- **Wave 1 — Memory layer.**
+  - `app/memory/buffer.py`: `BufferMemory` (satisfies `Memory`) — a deque window (short-term) plus long-term vector recall (every turn embedded into its own collection, so evicted turns stay findable) plus summarize-on-overflow (running transcript without an LLM, condensed via LLM when supplied).
+  - 6 tests (window eviction, recall of a turn-1 fact at turn 20, empty-query skip, overflow summary with/without LLM); 50 total. mypy + ruff clean.
 
 ### Notes
 

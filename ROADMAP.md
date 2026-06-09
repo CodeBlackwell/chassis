@@ -31,7 +31,7 @@ The boilerplate's load-bearing core. Everything else codes against it.
 Each owns one `app/*` package and codes against the frozen contracts.
 
 - **Orchestration** (`app/orchestration/`) — router (`retrieval`/`synthesis`/`chitchat`) + specialists + loop returning `Answer`, emitting trace. Chitchat answered directly by the orchestrator. Contract: `Orchestrator`.
-- **Memory** (`app/memory/`) — short-term window + long-term vector recall + summarize-on-overflow. Contract: `Memory`.
+- **Memory** (`app/memory/`) — DONE. `BufferMemory` — deque window + long-term vector recall (evicted turns stay findable) + summarize-on-overflow (LLM optional). 6 offline tests. Contract: `Memory`.
 - **Guardrails** (`app/guardrails/`) — DONE. `checks.py` (pure length/injection/PII/grounding) + `DefaultGuardrail` (refuse-by-default input rail, grounded output rail, optional LLM judge). 9 offline tests. Contract: `Guardrail` (recon §1; the marquee layer).
 - **Eval** (`app/eval/`) — RAGAS-style faithfulness / answer-relevance / context-precision + judge + runner + `scripts/make_eval_set.py` (corpus-agnostic goldens). Contract: `Evaluator` (recon §6).
 
