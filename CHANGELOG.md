@@ -33,6 +33,11 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `scripts/smoke.py --stage ingest`: runs the real pipeline through the configured stack; the `memory` profile makes it pass with **zero keys/services/heavy deps**.
   - `config/profiles/memory.yaml`; registry gains `embedder: hashing` and `vectorstore: memory`; `[project.optional-dependencies]` for qdrant/chroma/faiss/ingestion.
   - 13 more offline tests + a real end-to-end smoke run; 35 tests total. mypy + ruff clean.
+- **Docker + justfile (deployment scaffolding).**
+  - `Dockerfile` (uv, non-root, `EXTRAS` build arg installs only the profile's adapters), `.dockerignore`, `docker-compose.yml` (Qdrant + app, dev), `docker-compose.prod.yml` (internal network, Caddy as sole public entrypoint), `Caddyfile`.
+  - `justfile`: house recipe set (`default`/`setup`/`test`/`lint`/`fix`/`ingest`/`smoke`/`services`/`down`/`dev`/`build`/`deploy`/`logs`/`clean`); `dotenv-load`, env-driven deploy host/dir, port-kill before `dev`.
+  - Both compose files validate (`docker compose config`); `just --list` + `just ingest` run. The app server CMD (`app.ui`) goes live with the Wave 2 dashboard.
+  - Qdrant URL now comes from `QDRANT_URL` env (not baked in the profile) so the in-container hostname wires correctly.
 
 ### Notes
 

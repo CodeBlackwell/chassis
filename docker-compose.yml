@@ -1,0 +1,30 @@
+# Dev stack for the qdrant-local profile: Qdrant (exposed for debugging) + app.
+# In-process profiles (chroma-inmem / faiss-bare / memory) need no compose —
+# run the app bare. That is the vector-DB-drives-deployment coupling, made literal.
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  app:
+    build:
+      context: .
+      args:
+        EXTRAS: "embeddings-sbert,vectorstore-qdrant"
+    ports:
+      - "8000:8000"
+    environment:
+      CHASSIS_PROFILE: qdrant-local
+      QDRANT_URL: http://qdrant:6333
+    volumes:
+      - ./lib:/app/lib
+      - ./app:/app/app
+      - ./config:/app/config
+    depends_on:
+      - qdrant
+
+volumes:
+  qdrant_data:

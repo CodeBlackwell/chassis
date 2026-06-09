@@ -1,0 +1,53 @@
+# Prod stack: Qdrant + app on an internal network (no DB port exposed), Caddy as
+# the only public entrypoint (auto-HTTPS). Set DOMAIN in .env on the server.
+networks:
+  web:
+  internal:
+    internal: true
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - internal
+
+  app:
+    build:
+      context: .
+      args:
+        EXTRAS: "embeddings-sbert,vectorstore-qdrant"
+    restart: unless-stopped
+    environment:
+      CHASSIS_PROFILE: qdrant-local
+      QDRANT_URL: http://qdrant:6333
+    env_file:
+      - path: .env
+        required: false
+    networks:
+      - internal
+      - web
+    depends_on:
+      - qdrant
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+    depends_on:
+      - app
+
+volumes:
+  qdrant_data:
+  caddy_data:
+  caddy_config:

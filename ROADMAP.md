@@ -20,9 +20,9 @@ The boilerplate's load-bearing core. Everything else codes against it.
   - `lib/embeddings/hashing.py` — `HashingEmbedder` (zero-dep, lexical). `lib/retriever.py` — `SimpleRetriever`.
   - `lib/ingestion/pipeline.py` — `load()` + `ingest()` (.md/.txt/.pdf, trace-emitting).
   - `scripts/smoke.py --stage ingest` + `config/profiles/memory.yaml`: **real e2e ingest passes offline, zero deps**. 35 tests total.
+  - `Dockerfile` (uv, non-root, `EXTRAS` arg) + `.dockerignore` + `docker-compose.yml` (Qdrant+app) + `docker-compose.prod.yml` (internal net + Caddy) + `Caddyfile`; both compose files validate.
+  - `justfile` (house recipes); `just --list` + `just ingest` run. App-server CMD (`app.ui`) activates with Wave 2.
 - **Needed:**
-  - `docker-compose.yml` / `docker-compose.prod.yml` / `Dockerfile` / `Caddyfile` (recon §4; profile-aware).
-  - `justfile` (recon §3; house recipe set).
   - `smoke.py --stage e2e` (needs orchestration); `tests/conftest.py` (SDK-boundary mocks).
 - **Notes:** logger + no-silent-failures mandate is cross-cutting (recon §2), subordinate to the trace bus.
 

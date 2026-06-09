@@ -10,10 +10,9 @@ def test_load_default_profile():
 
 
 def test_config_strips_impl():
-    s = Settings.load("qdrant-local")
-    cfg = s.config("vectorstore")
-    assert "impl" not in cfg
-    assert cfg["url"] == "http://localhost:6333"
+    s = Settings(profile="x", layers={"vectorstore": {"impl": "qdrant", "url": "u", "k": 1}})
+    assert s.config("vectorstore") == {"url": "u", "k": 1}
+    assert s.impl("vectorstore") == "qdrant"
 
 
 def test_env_override_flips_impl(monkeypatch):

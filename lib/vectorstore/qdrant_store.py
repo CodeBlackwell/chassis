@@ -10,8 +10,10 @@ from lib.contracts import Chunk, SearchResult
 
 
 class QdrantStore:
-    def __init__(self, url: str = "http://localhost:6333") -> None:
-        self.url = url
+    def __init__(self, url: str | None = None) -> None:
+        import os
+
+        self.url = url or os.getenv("QDRANT_URL", "http://localhost:6333")
         self._client: Any = None
 
     def _get_client(self) -> Any:
