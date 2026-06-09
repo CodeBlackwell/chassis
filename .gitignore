@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+runs/
+corpora/*
+!corpora/.gitkeep
