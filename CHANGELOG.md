@@ -46,6 +46,10 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
 - **Wave 1 — Memory layer.**
   - `app/memory/buffer.py`: `BufferMemory` (satisfies `Memory`) — a deque window (short-term) plus long-term vector recall (every turn embedded into its own collection, so evicted turns stay findable) plus summarize-on-overflow (running transcript without an LLM, condensed via LLM when supplied).
   - 6 tests (window eviction, recall of a turn-1 fact at turn 20, empty-query skip, overflow summary with/without LLM); 50 total. mypy + ruff clean.
+- **Wave 1 — Orchestration + the first real e2e smoke.**
+  - `app/orchestration/`: `router` (heuristic retrieval/synthesis/chitchat), `specialists` (LLM-synthesized or extractive fallback), `DefaultOrchestrator` (satisfies `Orchestrator`) — `handle(query) -> Answer` running input rail → route → memory context → specialist → output rail, emitting a `TraceEvent` at each step. Consumes `Retriever`/`Memory`/`Guardrail`; LLM optional.
+  - `scripts/smoke.py --stage e2e`: ingest + orchestrated answer through the configured stack; the `memory` profile runs it with **zero keys/services/deps** (extractive answers). Trace shows the full `guardrail→route→memory→retrieval→guardrail→answer` flow.
+  - 6 tests (router ≥9/10, grounded answer with citations, injection blocked, chitchat, ≥3 trace events, memory records both turns); 56 total. mypy + ruff clean.
 
 ### Notes
 
