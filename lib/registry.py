@@ -19,11 +19,13 @@ REGISTRY: dict[str, dict[str, str]] = {
         "minilm": "lib.embeddings.sbert:SbertEmbedder",  # model name via kwargs
         "bge": "lib.embeddings.sbert:SbertEmbedder",
         "openai": "lib.embeddings.openai_emb:OpenAIEmbedder",
+        "hashing": "lib.embeddings.hashing:HashingEmbedder",  # zero-dep, tests/CI
     },
     "vectorstore": {
         "qdrant": "lib.vectorstore.qdrant_store:QdrantStore",
         "chroma": "lib.vectorstore.chroma_store:ChromaStore",
         "faiss": "lib.vectorstore.faiss_store:FaissStore",
+        "memory": "lib.vectorstore.memory_store:MemoryStore",  # zero-dep, tests/CI
     },
     "graphstore": {
         "sqlite": "lib.graphstore.sqlite_store:SqliteGraphStore",

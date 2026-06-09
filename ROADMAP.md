@@ -15,13 +15,15 @@ The boilerplate's load-bearing core. Everything else codes against it.
   - Offline tests for all three (13) + `[tool.pytest] pythonpath`; mypy + ruff clean.
   - `lib/llm/` — `AnthropicLLM` + `OpenAILLM` (lazy SDK, pure helpers) + `OllamaLLM` (stdlib urllib, zero deps). `LLM` contract.
   - `lib/embeddings/` — `SbertEmbedder` (minilm/bge) + `OpenAIEmbedder` (1536-dim fixed). `Embedder` contract.
-  - `[project.optional-dependencies]` groups per adapter; 22 tests total; mypy + ruff clean. Real round-trips deferred (need keys/models).
+  - `[project.optional-dependencies]` groups per adapter; mypy + ruff clean. Real round-trips deferred (need keys/models).
+  - `lib/vectorstore/` — `MemoryStore` (zero-dep) + `FaissStore` + `ChromaStore` + `QdrantStore`. `VectorStore` contract.
+  - `lib/embeddings/hashing.py` — `HashingEmbedder` (zero-dep, lexical). `lib/retriever.py` — `SimpleRetriever`.
+  - `lib/ingestion/pipeline.py` — `load()` + `ingest()` (.md/.txt/.pdf, trace-emitting).
+  - `scripts/smoke.py --stage ingest` + `config/profiles/memory.yaml`: **real e2e ingest passes offline, zero deps**. 35 tests total.
 - **Needed:**
-  - `lib/vectorstore/` — qdrant + chroma + faiss (`VectorStore`). Unlocks a real `smoke --stage ingest`.
-  - `lib/ingestion/` — corpus-agnostic load → chunk → embed → upsert (.md/.txt/.pdf).
   - `docker-compose.yml` / `docker-compose.prod.yml` / `Dockerfile` / `Caddyfile` (recon §4; profile-aware).
   - `justfile` (recon §3; house recipe set).
-  - `scripts/smoke.py` (`--stage ingest|e2e`), `tests/conftest.py` (SDK-boundary mocks).
+  - `smoke.py --stage e2e` (needs orchestration); `tests/conftest.py` (SDK-boundary mocks).
 - **Notes:** logger + no-silent-failures mandate is cross-cutting (recon §2), subordinate to the trace bus.
 
 ## Wave 1 — Domain layers (parallelizable, one owner each)

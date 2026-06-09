@@ -25,8 +25,8 @@ class TraceBus:
         self.run_id = run_id
         self._ring: deque[TraceEvent] = deque(maxlen=_RING_MAX)
         self._lock = threading.Lock()
-        self._path = Path(runs_dir) / f"{run_id}.jsonl"
-        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self.path = Path(runs_dir) / f"{run_id}.jsonl"
+        self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def emit(self, component: str, event: str, **payload: Any) -> TraceEvent:
         ev = TraceEvent(
@@ -38,7 +38,7 @@ class TraceBus:
         )
         with self._lock:
             self._ring.append(ev)
-            with self._path.open("a") as fh:
+            with self.path.open("a") as fh:
                 fh.write(json.dumps(asdict(ev)) + "\n")
         return ev
 

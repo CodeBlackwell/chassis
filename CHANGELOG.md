@@ -25,6 +25,14 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `lib/embeddings/`: `SbertEmbedder` (serves `minilm` + `bge`; lazy model load) and `OpenAIEmbedder` (1536-dim fixed at construction). Both satisfy `Embedder`.
   - Adapter deps are now `[project.optional-dependencies]` groups (`llm-anthropic`, `llm-openai`, `embeddings-sbert`, `embeddings-openai`) so the base install stays light; install only the stack a profile selects.
   - 9 more offline tests (helper shaping + Settings→registry→real-adapter wiring proven for the zero-dep path). Real round-trips need keys/models (deferred). 22 tests total.
+- **Vector stores + ingestion + the first real smoke gate.**
+  - `lib/vectorstore/`: `MemoryStore` (zero-dep brute-force cosine), `FaissStore`, `ChromaStore`, `QdrantStore` — all satisfy `VectorStore` (conformance-guarded; heavy backends lazy-imported).
+  - `lib/embeddings/hashing.py`: `HashingEmbedder` — zero-dep feature-hashing (real lexical signal), for tests/CI/offline.
+  - `lib/ingestion/pipeline.py`: `load()` (.md/.txt/.pdf → chunks with size/overlap) + `ingest()` (embed → ensure_collection → upsert, emitting trace events).
+  - `lib/retriever.py`: `SimpleRetriever` (embed query → store search), satisfies `Retriever`.
+  - `scripts/smoke.py --stage ingest`: runs the real pipeline through the configured stack; the `memory` profile makes it pass with **zero keys/services/heavy deps**.
+  - `config/profiles/memory.yaml`; registry gains `embedder: hashing` and `vectorstore: memory`; `[project.optional-dependencies]` for qdrant/chroma/faiss/ingestion.
+  - 13 more offline tests + a real end-to-end smoke run; 35 tests total. mypy + ruff clean.
 
 ### Notes
 

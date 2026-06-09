@@ -27,6 +27,7 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 | all-MiniLM-L6-v2 (384-dim) | Tiny, fast, offline, great default | Lower retrieval quality than larger models | **Yes** | — |
 | bge-small-en-v1.5 (384-dim) | Better quality, **same dim as MiniLM (free swap)** | Larger download | No | Want more quality and download time is fine |
 | OpenAI text-embedding-3-small (1536-dim) | Strong quality, no local compute | Costs money; **different dim — see coupling** | No | No local compute available |
+| Hashing (feature-hash, any dim) | Zero deps, deterministic, no model/download | Lexical overlap only, no semantics | No | Tests / CI / offline smoke |
 
 > Coupling: dim is frozen at ingest. MiniLM ↔ bge is a free swap (both 384). Switching to OpenAI (1536) after ingest requires a full re-ingest.
 
@@ -37,6 +38,7 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 | Qdrant | Production-grade, real ANN, scales independently, the "prod" story | Needs a running service (docker-compose) | **Yes** | — |
 | Chroma (in-mem) | Zero services, runs in-process, trivial setup | Not the production story; memory-bound | No | Zero-service environment needed |
 | FAISS (pure lib) | No service, fast, battle-tested | Lowest-level; you manage persistence/metadata | No | Zero-service and you want raw control |
+| Memory (in-process) | Zero deps (no numpy), brute-force cosine | O(n) search, not persistent | No | Tests / CI / offline smoke |
 
 > Coupling: this choice drives deployment. Qdrant → docker-compose. Chroma/FAISS → single Dockerfile or bare process.
 
