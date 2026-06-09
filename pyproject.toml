@@ -8,6 +8,15 @@ dependencies = [
     "python-dotenv", # .env -> env vars for the live-pivot overrides
 ]
 
+# Adapter deps are optional: install only the stack a profile selects, e.g.
+#   uv pip install -e ".[llm-anthropic,embeddings-sbert]"
+# Ollama needs nothing (stdlib urllib).
+[project.optional-dependencies]
+llm-anthropic = ["anthropic"]
+llm-openai = ["openai"]
+embeddings-sbert = ["sentence-transformers"]
+embeddings-openai = ["openai"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

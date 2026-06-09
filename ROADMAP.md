@@ -13,10 +13,11 @@ The boilerplate's load-bearing core. Everything else codes against it.
   - `config/profiles/` — `qdrant-local.yaml`, `chroma-inmem.yaml`, `faiss-bare.yaml`.
   - `lib/trace.py` — `TraceBus`: `deque(maxlen=500)` behind a lock + per-run JSONL sink; `emit()` / `recent(component_prefix=)`.
   - Offline tests for all three (13) + `[tool.pytest] pythonpath`; mypy + ruff clean.
+  - `lib/llm/` — `AnthropicLLM` + `OpenAILLM` (lazy SDK, pure helpers) + `OllamaLLM` (stdlib urllib, zero deps). `LLM` contract.
+  - `lib/embeddings/` — `SbertEmbedder` (minilm/bge) + `OpenAIEmbedder` (1536-dim fixed). `Embedder` contract.
+  - `[project.optional-dependencies]` groups per adapter; 22 tests total; mypy + ruff clean. Real round-trips deferred (need keys/models).
 - **Needed:**
-  - `lib/llm/` — anthropic + openai + ollama adapters (`LLM` contract).
-  - `lib/embeddings/` — sbert (minilm/bge) + openai (`Embedder`). Lock dim before ingest.
-  - `lib/vectorstore/` — qdrant + chroma + faiss (`VectorStore`).
+  - `lib/vectorstore/` — qdrant + chroma + faiss (`VectorStore`). Unlocks a real `smoke --stage ingest`.
   - `lib/ingestion/` — corpus-agnostic load → chunk → embed → upsert (.md/.txt/.pdf).
   - `docker-compose.yml` / `docker-compose.prod.yml` / `Dockerfile` / `Caddyfile` (recon §4; profile-aware).
   - `justfile` (recon §3; house recipe set).

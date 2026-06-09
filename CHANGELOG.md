@@ -20,6 +20,11 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `config/profiles/`: `qdrant-local`, `chroma-inmem`, `faiss-bare`.
   - `lib/trace.py`: `TraceBus` — `deque(maxlen=500)` behind a lock + per-run JSONL sink; `emit()` and `recent(component_prefix=)`.
   - Runtime deps added: `pyyaml`, `python-dotenv`. 13 offline tests; mypy + ruff clean.
+- **LLM + embedder adapters.**
+  - `lib/llm/`: `AnthropicLLM`, `OpenAILLM` (lazy SDK import; pure message-split + response-shape helpers), `OllamaLLM` (stdlib `urllib`, zero extra deps — the no-key offline fallback). All satisfy the `LLM` contract (TYPE_CHECKING conformance guard).
+  - `lib/embeddings/`: `SbertEmbedder` (serves `minilm` + `bge`; lazy model load) and `OpenAIEmbedder` (1536-dim fixed at construction). Both satisfy `Embedder`.
+  - Adapter deps are now `[project.optional-dependencies]` groups (`llm-anthropic`, `llm-openai`, `embeddings-sbert`, `embeddings-openai`) so the base install stays light; install only the stack a profile selects.
+  - 9 more offline tests (helper shaping + Settings→registry→real-adapter wiring proven for the zero-dep path). Real round-trips need keys/models (deferred). 22 tests total.
 
 ### Notes
 
