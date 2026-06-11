@@ -10,7 +10,7 @@ The flexibility mechanism in one sentence: `lib/contracts.py` defines what each 
 
 ## Status
 
-Built and verified offline (66 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `ingestion` + `SimpleRetriever`; the full ingest + e2e smoke gates; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); and the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place) and the Ralph build harness. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
+Built and verified offline (66 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `ingestion` + `SimpleRetriever`; the full ingest + e2e smoke gates; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`); and the Ralph army build harness (`scripts/ralph.py` + `prds/` bundles + the `/prd` skill — see [docs/runbooks/ralph-army.md](docs/runbooks/ralph-army.md)). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place). See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
 
 The whole system runs with **zero keys/services/deps** via the `memory` profile; swap to the real stack by changing one profile flag.
 
@@ -23,6 +23,7 @@ lib/     shared infra — contracts, registry, trace bus, adapters, ingestion
 app/     domain layers — orchestration, memory, guardrails, eval, ui
 config/  env-driven settings + named stack profiles
 docs/    categorical subdirs — architecture/, guides/, reference/, plans/, features/, runbooks/
+prds/    Ralph build-harness bundles (PRD + agents/ + progress/ per feature); _example/ is the template
 ```
 
 ## Commands
@@ -35,6 +36,7 @@ just test                            # pytest
 just lint                            # ruff + mypy (must stay clean)
 just ingest <folder>                 # ingest a corpus (default: memory profile)
 just dev                             # launch the dashboard on :8000 (--extra ui)
+just ralph prds/<slug>               # Ralph solo build loop (just army … for gated waves)
 uv run python scripts/smoke.py --stage e2e --corpus <folder> --profile memory
 ```
 

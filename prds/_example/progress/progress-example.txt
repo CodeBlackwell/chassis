@@ -1,0 +1,33 @@
+# Example Agent Progress
+# Wave: 1 (PARALLEL)
+# Stories: US-010 to US-013
+
+## Status: NOT_STARTED
+
+## Stories
+
+[ ] US-010: [Title]
+    - [ ] Criterion 1
+    - [ ] Criterion 2
+    - [ ] just lint && just test passes
+
+[ ] US-011: [Title]
+    - [ ] Criterion 1
+    - [ ] just lint && just test passes
+
+---
+
+## Notes
+(Agent appends learnings here as it works)
+
+Format per story:
+## US-XXX: [Title]
+- What was implemented
+- Files changed
+- Learnings for downstream agents
+
+---
+
+## Completion Signal
+(When all stories are done, agent writes the delivered-complete tag here.
+NEVER pre-fill the literal tag — Ralph substring-matches this file.)

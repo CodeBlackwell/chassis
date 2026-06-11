@@ -49,9 +49,12 @@ Each owns one `app/*` package and codes against the frozen contracts.
 - **RAGAS library** eval, **Guardrails AI / NeMo**, **LangGraph / CrewAI** orchestration, **Redis** memory — each a registry/profile swap with a named trigger (stack-matrix).
 - **Figma workflow** — process, not code: `tokens.json` stays source of truth; use the figma skills to mirror tokens / push UI mockups (recon §11).
 
-## Build method — Ralph army (deferred harness)
+## Build method — Ralph army (INSTALLED)
 
-- `agents/*.yaml` + `skills/*/SKILL.md` + `ralph.py` adopting a shared-standards file, frontmatter+phases+gates specs, and a wave/gate supervisor with acceptance-command verification (recon §13). Per the v2 plan, run the army the night before so the repo ships integration-green; the live run is the flex with a guaranteed floor.
+- `scripts/ralph.py` (vendored from the Army-of-Ralph gist) — solo mode (one task per iteration) and army mode (parallel agents per wave, `WAVE_N` gate commands with retry, three-layer delivered/verified completion as the false-"done" guard — recon §13's acceptance-command verification). `just ralph <bundle>` / `just army <bundle>`.
+- PRD bundles are self-contained at `prds/<slug>/` (`PRD.md` + `agents/` + `progress/`); `prds/_example/` is the template; the `/prd` skill (`.claude/skills/prd/SKILL.md`) generates bundles with CHASSIS gates (`just lint && just test`). Runbook: [docs/runbooks/ralph-army.md](docs/runbooks/ralph-army.md).
+- Per the v2 plan, run the army the night before so the repo ships integration-green; the live run is the flex with a guaranteed floor.
+- **Pre/post suite** (`.claude/agents/`, all referencing `_shared-standards.md`): `tech-researcher` (one topic per invocation, parallel fan-out) → `matrix-author` (house pro/con matrix) → `default-skeptic` (adversarial pass on defaults) feed `/prd`; `delivery-auditor` (integrated-whole verification, gap list → next PRD) and `readout-writer` (provisional — dated readout + doc sync) close the loop after a run. The `/recon` skill (`.claude/skills/recon/`) is the front door: assignment in → indexed options report in `docs/plans/` out. First live test: `/recon` the GraphStore backends ahead of the knowledge-graph PRD.
 
 ## Deliberately out of scope (YAGNI ledger)
 

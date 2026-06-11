@@ -42,6 +42,14 @@ dev:
     -lsof -ti :8000 | xargs kill -9 2>/dev/null
     uv run --extra ui python -m app.ui
 
+# Ralph solo: one agent iterating a PRD bundle (prds/<slug>)
+ralph target iters="10":
+    uv run python scripts/ralph.py {{target}} {{iters}}
+
+# Ralph's Army: parallel agents in gated waves
+army target:
+    uv run python scripts/ralph.py {{target}} --army
+
 # build the app image
 build:
     docker build -t chassis:latest .

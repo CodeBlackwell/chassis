@@ -8,3 +8,5 @@ __pycache__/
 runs/
 corpora/*
 !corpora/.gitkeep
+prds/*/logs/
+prds/*/ralph_timing.log
