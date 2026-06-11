@@ -32,3 +32,16 @@ def test_profile_env_var_selects_file(monkeypatch):
 def test_unknown_profile_raises():
     with pytest.raises(FileNotFoundError):
         Settings.load("does-not-exist")
+
+
+def test_app_layers_build_from_profile():
+    s = Settings.load("memory")
+    embedder = s.build("embedder")
+    store = s.build("vectorstore")
+    orchestrator = s.build(
+        "orchestrator",
+        retriever=s.build("retriever", embedder=embedder, store=store),
+        memory=s.build("memory", embedder=embedder, store=store),
+        guardrail=s.build("guardrail"),
+    )
+    assert orchestrator.handle("hello").route == "chitchat"

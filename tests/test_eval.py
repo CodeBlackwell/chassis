@@ -4,7 +4,7 @@ from app.eval import metrics
 from app.eval.dataset import generate
 from app.eval.evaluator import RagasEvaluator, summary, to_csv
 from app.eval.runner import answer_rows, report
-from app.guardrails.guard import DefaultGuardrail
+from app.guardrails.guard import PassthroughGuardrail
 from app.memory.buffer import BufferMemory
 from app.orchestration.orchestrator import DefaultOrchestrator
 from lib.contracts import Chunk, EvalRow, LLMResponse, Message
@@ -79,7 +79,7 @@ def _orchestrator():
     return DefaultOrchestrator(
         SimpleRetriever(embedder, store),
         BufferMemory(embedder, MemoryStore(), collection="memory"),
-        DefaultGuardrail(),
+        PassthroughGuardrail(),
     )
 
 

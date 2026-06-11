@@ -1,6 +1,6 @@
 # Roadmap
 
-Build order for CHASSIS, by wave and layer. No dates — the workspace builds fast. Each section lists **Done**, **Needed**, and **Notes**. Source of truth for *what* each layer must satisfy is `lib/contracts.py`; source for *which option is default* is [docs/stack-matrix.md](docs/stack-matrix.md); source for *which workspace pattern to copy* is the [recon plan](docs/2026-06-09_workspace-recon-injection-plan.md).
+Build order for CHASSIS, by wave and layer. No dates — the workspace builds fast. Each section lists **Done**, **Needed**, and **Notes**. Source of truth for *what* each layer must satisfy is `lib/contracts.py`; source for *which option is default* is [docs/reference/stack-matrix.md](docs/reference/stack-matrix.md); source for *which workspace pattern to copy* is the [recon plan](docs/plans/2026-06-09_workspace-recon-plan.md).
 
 ## Wave 0 — Foundation (the pre-bakeable infra)
 
@@ -32,7 +32,7 @@ Each owns one `app/*` package and codes against the frozen contracts.
 
 - **Orchestration** (`app/orchestration/`) — DONE. `router` + `specialists` (LLM or extractive) + `DefaultOrchestrator` (input rail → route → memory → specialist → output rail → `Answer`, emits trace). `smoke --stage e2e` runs offline. 6 tests. Contract: `Orchestrator`.
 - **Memory** (`app/memory/`) — DONE. `BufferMemory` — deque window + long-term vector recall (evicted turns stay findable) + summarize-on-overflow (LLM optional). 6 offline tests. Contract: `Memory`.
-- **Guardrails** (`app/guardrails/`) — DONE. `checks.py` (pure length/injection/PII/grounding) + `DefaultGuardrail` (refuse-by-default input rail, grounded output rail, optional LLM judge). 9 offline tests. Contract: `Guardrail` (recon §1; the marquee layer).
+- **Guardrails** (`app/guardrails/`) — STUB BY DESIGN. `PassthroughGuardrail` satisfies the `Guardrail` contract and is wired through the orchestrator's block seam, but enforces nothing — what counts as injection/PII/ungrounded is domain-specific, so the base ships the seam, not a policy. A project registers its own rail under `guardrail` and selects it in a profile; the orchestrator already honors a blocking verdict, so a real rail drops in with no other change. Contract: `Guardrail` (recon §1). 2 offline tests + an orchestration test that the block seam fires.
 - **Eval** (`app/eval/`) — DONE. `metrics` (faithfulness/answer-relevance/context-precision) + `RagasEvaluator` (+ optional judge, summary, CSV) + `runner` + `dataset`/`make_eval_set.py` (corpus-agnostic goldens). 8 tests. Contract: `Evaluator` (recon §6).
 
 **Wave 1 complete.** All four domain layers built, tested offline, contract-conformant.
@@ -41,7 +41,7 @@ Each owns one `app/*` package and codes against the frozen contracts.
 
 - **`app/ui/`** — Gradio four-tab dashboard (Chat, Sources, Guardrails, Eval); `build_app` injects the orchestrator + trace bus + eval_fn; `python -m app.ui` launches on :8000. Construction tested + launch verified (HTTP 200).
 - **Theming** — `tokens.json` + `theme.py` inject CSS variables; METHODPROOF SHOMEN/KINMYAKU default. `CHASSIS_THEME=dark` flips it.
-- **Data viz** — tables/markdown shipped (the YAGNI line held). A single embedded D3 router→specialist handoff swimlane remains an optional enhancement (recon §10).
+- **Data viz** — tables/markdown shipped (the YAGNI line held). No further viz planned: anything flow-shaped would couple the UI to one orchestrator's topology, against the contract boundary (recon §10 swimlane struck 2026-06-10).
 
 ## Options (off by default; build on a trigger)
 

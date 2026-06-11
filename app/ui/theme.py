@@ -1,6 +1,6 @@
 """Theming: load the token set and render CSS custom properties for Gradio. The
 default theme is METHODPROOF (SHOMEN light / KINMYAKU dark). Pure (no Gradio import),
-so it tests offline. See docs/stack-matrix.md (Theming) to swap.
+so it tests offline. See docs/reference/stack-matrix.md (Theming) to swap.
 """
 
 import json

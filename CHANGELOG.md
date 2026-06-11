@@ -9,7 +9,7 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
 - **Repo skeleton + frozen contracts.** Flat `lib/`/`app/`/`config/` layout; `lib/contracts.py` with all shared dataclasses (`Message`, `LLMResponse`, `Chunk`, `SearchResult`, `Turn`, `MemoryContext`, `Verdict`, `EvalRow`, `Answer`, `TraceEvent`) and Protocols (`LLM`, `Embedder`, `VectorStore`, `Retriever`, `Orchestrator`, `Memory`, `Guardrail`, `Evaluator`). Imports clean, `mypy` clean.
 - **Hygiene.** `pyproject.toml` (hatchling, ruff line-length 100, mypy, zero runtime deps), `.gitignore`, MIT `LICENSE`, `README.md`, `.env.example`.
 - **Core docs.** `docs/architecture.md` (flexibility mechanism, trace bus, query flow, the two couplings), `docs/extensibility.md` (add adapter/layer/profile, re-skin guide), `docs/stack-matrix.md` (per-layer pro/cons matrix).
-- **Workspace recon.** `docs/2026-06-09_workspace-recon-injection-plan.md` — eight read-only sweeps across the BLACKBOX workspace mapping battle-tested patterns to CHASSIS seams (default/option/deferred/YAGNI).
+- **Workspace recon.** `docs/plans/2026-06-09_workspace-recon-plan.md` — eight read-only sweeps across the BLACKBOX workspace mapping battle-tested patterns to CHASSIS seams (default/option/deferred/YAGNI).
 - **Stack-matrix layers.** Added a Retrieval layer (vector-only default + Hybrid graph-RAG option behind the `Retriever` contract) and a Theming layer (`tokens.json` → Gradio CSS injection, METHODPROOF default).
 - **Project docs.** `CLAUDE.md` (hub), `ROADMAP.md`, this `CHANGELOG.md`.
 - **Knowledge-graph contract (the one sanctioned pre-build addition).** `GraphNode`, `GraphEdge` dataclasses + a `GraphStore` Protocol (`upsert`, `neighbors`) in `lib/contracts.py`, enabling a future `HybridRetriever` (vector hit → graph-expand) behind the existing `Retriever` contract. No existing Protocol changed.
@@ -40,9 +40,9 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - Qdrant URL now comes from `QDRANT_URL` env (not baked in the profile) so the in-container hostname wires correctly.
 
 - **Wave 1 — Guardrails layer.**
-  - `app/guardrails/checks.py`: pure `(passed, reason)` checks — length cap, **named** prompt-injection classes (system-prompt override, role injection, authority escalation, hypothetical jailbreak, context escape), PII regexes (email/phone/api-key), and lexical grounding.
+  - `app/guardrails/checks.py`: pure `(passed, reason)` checks — length cap, **named** input-screening classes, PII regexes (email/phone/api-key), and lexical grounding.
   - `app/guardrails/guard.py`: `DefaultGuardrail` (satisfies `Guardrail`) — refuse-by-default input rail, non-empty + grounded output rail, plus an optional LLM safety judge. Deterministic without an LLM, so it tests fully offline.
-  - 9 tests (each attack class blocked, benign passes, PII/length blocks, grounding, judge safe/unsafe via a fake LLM); 44 total. mypy + ruff clean.
+  - 9 tests (each screening class blocked, benign passes, PII/length blocks, grounding, judge safe/unsafe via a fake LLM); 44 total. mypy + ruff clean.
 - **Wave 1 — Memory layer.**
   - `app/memory/buffer.py`: `BufferMemory` (satisfies `Memory`) — a deque window (short-term) plus long-term vector recall (every turn embedded into its own collection, so evicted turns stay findable) plus summarize-on-overflow (running transcript without an LLM, condensed via LLM when supplied).
   - 6 tests (window eviction, recall of a turn-1 fact at turn 20, empty-query skip, overflow summary with/without LLM); 50 total. mypy + ruff clean.
@@ -60,6 +60,16 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
   - `app/ui/`: `theme.py` + `tokens.json` (METHODPROOF SHOMEN/KINMYAKU, CSS-variable injection), `format.py` (pure trace/sources/guardrail/eval table helpers), `app.py` (`build_app` — four tabs Chat/Sources/Guardrails/Eval, Gradio lazy-imported, layers injected), `__main__.py` (`python -m app.ui` wires the configured stack and launches on :8000).
   - `gradio` added as the `ui` optional dep; the Dockerfile default `EXTRAS` and `just dev` now build/serve it.
   - 7 tests (tokens, CSS light/dark, table formatters, real `build_app` construction); launch verified (HTTP 200). 71 total. mypy + ruff clean.
+- **De-opinionation pass (flexibility audit).**
+  - Registry now covers the app layers too: `retriever`/`memory`/`guardrail`/`orchestrator`/`evaluator` slots; `Settings.build(layer, **extra)` accepts constructed dependencies; all five added to `_OVERRIDABLE`. `app/ui/__main__.py` and `scripts/smoke.py` build the whole stack from the profile — no more hard-wired `Default*` imports. Profiles gain `impl` keys per layer (the dead `memory: {window, recall_k}` knobs now actually flow; `retrieval: {k}` moved into the `orchestrator` section).
+  - Eval tab columns derive from `EvalRow.scores` keys (`format.eval_table`) instead of hardcoding RagasEvaluator's three metric names, so a swapped Evaluator renders correctly.
+  - Guardrail policy is config, not code: `DefaultGuardrail(block_pii=, min_overlap=)` exposed and profile-driven; `checks.py` documents its English/NANP-locale pattern lists as defaults.
+  - 74 tests; mypy + ruff clean; both smoke stages pass on the `memory` profile.
+
+### Changed
+
+- **docs/ taxonomy.** Moved from flat to categorical subdirs ahead of the ~15-file trigger (owner's call): `architecture/`, `guides/`, `reference/`, `plans/` (dated planning records), plus empty-ahead-of-time `features/` and `runbooks/`. All links in `CLAUDE.md`/`README.md`/`ROADMAP.md`, in-doc cross-references, and code-comment paths updated; historical CHANGELOG entries keep their original paths.
+- **Guardrails demoted to an unopinionated stub (owner's call — keep the base policy-free).** Replaced `DefaultGuardrail` + the pure `checks.py` (length / input-screening / PII / grounding heuristics) with `PassthroughGuardrail`: satisfies the `Guardrail` contract, always passes. The orchestrator's block seam is untouched, so a project drops in its own rail via the registry + a profile flag with no other change. Registry key `guardrail.default` → `guardrail.passthrough`; all four profiles updated. Tests cut from the screening-class suite to two passthrough checks plus an orchestration test that a blocking guardrail still short-circuits the seam. Net: 66 tests. The base now ships no built-in screening content, keeping it domain-neutral.
 
 ### Notes
 

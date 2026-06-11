@@ -31,6 +31,21 @@ REGISTRY: dict[str, dict[str, str]] = {
         "sqlite": "lib.graphstore.sqlite_store:SqliteGraphStore",
         "neo4j": "lib.graphstore.neo4j_store:Neo4jGraphStore",
     },
+    "retriever": {
+        "simple": "lib.retriever:SimpleRetriever",
+    },
+    "memory": {
+        "buffer": "app.memory.buffer:BufferMemory",
+    },
+    "guardrail": {
+        "passthrough": "app.guardrails.guard:PassthroughGuardrail",
+    },
+    "orchestrator": {
+        "default": "app.orchestration.orchestrator:DefaultOrchestrator",
+    },
+    "evaluator": {
+        "ragas": "app.eval.evaluator:RagasEvaluator",
+    },
 }
 
 

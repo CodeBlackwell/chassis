@@ -44,7 +44,7 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 
 ## Retrieval — contract: `Retriever` (+ optional `GraphStore`)
 
-Default retrieval is vector-only over the `VectorStore`. A knowledge-graph option adds structural recall (vector hit → graph-expand to connected nodes) behind the same `Retriever` contract, via a `HybridRetriever` and a new optional `GraphStore`. See [extensibility.md](extensibility.md) Move 2 — this is the one deliberate pre-build contract addition.
+Default retrieval is vector-only over the `VectorStore`. A knowledge-graph option adds structural recall (vector hit → graph-expand to connected nodes) behind the same `Retriever` contract, via a `HybridRetriever` and a new optional `GraphStore`. See [extensibility.md](../guides/extensibility.md) Move 2 — this is the one deliberate pre-build contract addition.
 
 | Option | Pros | Cons | Default? | Switch trigger |
 |--------|------|------|----------|----------------|
@@ -64,9 +64,12 @@ Default retrieval is vector-only over the `VectorStore`. A knowledge-graph optio
 
 ## Guardrails — contract: `Guardrail`
 
+The base ships a passthrough stub, not a policy — what to enforce is domain-specific. A project registers its own rail under `guardrail` and selects it in a profile; the orchestrator's block seam already honors a failing verdict.
+
 | Option | Pros | Cons | Default? | Switch trigger |
 |--------|------|------|----------|----------------|
-| Custom (Pydantic + heuristics + judge) | Named attack classes, transparent, fast, controllable | You maintain the heuristics | **Yes** | — |
+| Passthrough stub | Zero policy baked in; the base stays domain-neutral | Enforces nothing until a project adds a rail | **Yes** | — |
+| Project-specific rules (heuristics + judge) | Tailored to the domain's risks; transparent | You write and maintain them | No | The domain needs input/output enforcement |
 | Guardrails AI | Off-the-shelf validators, declarative | Another dependency; less transparent | No | They want a named library |
 | NeMo Guardrails | Declarative rails, enterprise pedigree | Heavier, more setup | No | Enterprise/declarative rails are the ask |
 

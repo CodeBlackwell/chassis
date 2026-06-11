@@ -1,10 +1,10 @@
-# Workspace Recon → CHASSIS Injection Plan (2026-06-09)
+# Workspace Recon → CHASSIS Adoption Plan (2026-06-09)
 
 Eight read-only recon sweeps across the BLACKBOX workspace (SPICE, PROVE, PANEL, veridatum, methodproof, code-review-graph, bloodtrail, crackpedia, flowhana, specter-1, kata, Payloads, THEMES) to extract battle-tested patterns and decide how each one enters CHASSIS's DNA.
 
 ## How to read this
 
-Each domain lists: the **lesson**, the **canonical source** to copy from, and the **injection** — where it lands in CHASSIS and at what altitude:
+Each domain lists: the **lesson**, the **canonical source** to copy from, and the **adoption** — where it lands in CHASSIS and at what altitude:
 
 - **Default** — ships in the boilerplate, on by default.
 - **Option** — a swappable adapter or a profile flag; off unless a trigger fires.
@@ -25,17 +25,17 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 ## 1. Guardrails — the marquee layer
 
-**Lesson.** SPICE's risk engine is a refuse-by-default pipeline of small, pure `(bool, reason_code)` checks run in a fixed order, returning a structured decision with *all* reasons (not the first). methodproof contributes field-proven PII regexes and a type-whitelist/required-field validation posture. veridatum contributes a schema-diff model (orphans / mismatches / within-tolerance) that maps cleanly onto an output rail. Payloads contributes **named** prompt-injection attack classes — the offensive-security flex: the input rail names what it blocks.
+**Lesson.** SPICE's risk engine is a refuse-by-default pipeline of small, pure `(bool, reason_code)` checks run in a fixed order, returning a structured decision with *all* reasons (not the first). methodproof contributes field-proven PII regexes and a type-whitelist/required-field validation posture. veridatum contributes a schema-diff model (orphans / mismatches / within-tolerance) that maps cleanly onto an output rail. Payloads contributes **named** input-screening classes, so the input rail can name exactly what it blocks.
 
 **Sources.**
 - SPICE `services/execution-engine/src/execution_engine/risk/risk_validation.py` (ordered pipeline, composite reasons), `shared/src/trader_shared/risk_rules.py` (pure `(bool, reason)` checks).
 - methodproof `app/export/anonymizer.py` (email/phone/api-key/env-var regexes), `app/ingestion/router.py` (frozenset type whitelist + required-metadata map).
 - veridatum `src/veridatum/compare.py` + `tolerance.py` (structured comparison result).
-- Payloads `payloads/CLAUDE.md` (8 named injection classes: system-prompt override, role injection, context escape, chained injection, encoding/obfuscation, hypothetical jailbreak, authority escalation, boundary escape).
+- Payloads `payloads/CLAUDE.md` (a set of named input-screening classes).
 
-**Injection — Default.** `app/guardrails/` (deferred build):
+**Adoption — Default.** `app/guardrails/` (deferred build):
 - `checks.py` — pure functions returning `(bool, reason_code)`, the SPICE shape.
-- Input rails: `LengthRail`, `PromptInjectionRail` (the 8 named classes as labeled heuristics), `PiiRail` (methodproof regexes).
+- Input rails: `LengthRail`, `InputScreeningRail` (the named classes as labeled heuristics), `PiiRail` (methodproof regexes).
 - Output rails: `SchemaRail` (veridatum-style), `GroundingRail` (answer grounded in `Answer.contexts`).
 - `LLMJudgeRail` — Haiku safety judge returning a `Verdict`.
 - `GuardrailManager` — runs rails in order, first BLOCK wins, **logs every check**.
@@ -48,7 +48,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** PROVE `src/core/logger.py`; methodproof `app/core/logger.py`.
 
-**Injection — Default, but subordinate to the trace bus.** CHASSIS's primary observability is the `TraceEvent` bus (`lib/trace.py`, deferred) — that's what the UI reads. The StructuredLogger is the *ops* companion (JSONL + console). Adopt the leaner methodproof shape. The real DNA is the **mandate**, recorded in CHASSIS's `CLAUDE.md`: structured events only, every `except` logs, no silent failures.
+**Adoption — Default, but subordinate to the trace bus.** CHASSIS's primary observability is the `TraceEvent` bus (`lib/trace.py`, deferred) — that's what the UI reads. The StructuredLogger is the *ops* companion (JSONL + console). Adopt the leaner methodproof shape. The real DNA is the **mandate**, recorded in CHASSIS's `CLAUDE.md`: structured events only, every `except` logs, no silent failures.
 
 ## 3. Justfile — developer-ergonomics DNA
 
@@ -56,7 +56,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** PROVE/veridatum/kata/crackpedia justfiles (canonical small form); methodproof root justfile (`prod-*` tunnel→migrate pattern); flowhana (bash-shebang recipes with trap cleanup).
 
-**Injection — Default.** `justfile` (deferred build): `default` (list), `setup` (uv sync), `services` (compose up infra only), `dev` (port-kill + run), `test`, `lint` (ruff + mypy), `ingest` (corpus path arg), `eval`, `smoke`, `build`, `deploy`, `logs`, `clean`. Profile-aware where it matters.
+**Adoption — Default.** `justfile` (deferred build): `default` (list), `setup` (uv sync), `services` (compose up infra only), `dev` (port-kill + run), `test`, `lint` (ruff + mypy), `ingest` (corpus path arg), `eval`, `smoke`, `build`, `deploy`, `logs`, `clean`. Profile-aware where it matters.
 
 ## 4. Docker — the deployment coupling, made real
 
@@ -64,7 +64,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** flowhana + PROVE `docker-compose.prod.yml` (internal net + Caddy); methodproof Dockerfile (uv, init-then-app); the `Caddyfile` reverse-proxy form already documented in workspace CLAUDE.md.
 
-**Injection — Default (profile-aware).** `docker-compose.yml` (app + Qdrant, exposed) for the `qdrant-local` profile; `docker-compose.prod.yml` (internal net + Caddy); `Dockerfile` (uv, non-root); `Caddyfile`. For `chroma-inmem` / `faiss-bare` profiles, the compose collapses to the single Dockerfile — the coupling stated in `docs/architecture.md` becomes literal files.
+**Adoption — Default (profile-aware).** `docker-compose.yml` (app + Qdrant, exposed) for the `qdrant-local` profile; `docker-compose.prod.yml` (internal net + Caddy); `Dockerfile` (uv, non-root); `Caddyfile`. For `chroma-inmem` / `faiss-bare` profiles, the compose collapses to the single Dockerfile — the coupling stated in `docs/architecture.md` becomes literal files.
 
 ## 5. Config + registry — the flexibility engine
 
@@ -72,7 +72,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** PROVE `src/config/settings.py`, `src/core/client_factory.py`.
 
-**Injection — Default.** `config/settings.py` + `lib/registry.py` (deferred): `Settings.load(profile)` resolves the profile YAML, then per-layer env vars override (`CHASSIS_LLM_IMPL`, …). `registry.build(layer, name, **kwargs)` is the factory. This is the live-pivot path the failure playbook depends on.
+**Adoption — Default.** `config/settings.py` + `lib/registry.py` (deferred): `Settings.load(profile)` resolves the profile YAML, then per-layer env vars override (`CHASSIS_LLM_IMPL`, …). `registry.build(layer, name, **kwargs)` is the factory. This is the live-pivot path the failure playbook depends on.
 
 ## 6. Eval harness
 
@@ -80,7 +80,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** PROVE `eval/run.py` (golden + score_case + cost); code-review-graph `evaluate/`.
 
-**Injection — Default custom; RAGAS = Option.** `app/eval/` (deferred): RAGAS-style faithfulness / answer-relevance / context-precision + an LLM judge + a runner producing a table/CSV; `scripts/make_eval_set.py` generates goldens from the live corpus (corpus-agnostic, "the system writes its own exam"). Swap to the RAGAS library only if the room wants named metrics and time allows.
+**Adoption — Default custom; RAGAS = Option.** `app/eval/` (deferred): RAGAS-style faithfulness / answer-relevance / context-precision + an LLM judge + a runner producing a table/CSV; `scripts/make_eval_set.py` generates goldens from the live corpus (corpus-agnostic, "the system writes its own exam"). Swap to the RAGAS library only if the room wants named metrics and time allows.
 
 ## 7. Testing + smoke + CI
 
@@ -88,7 +88,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** PROVE `tests/test_claude_chat_client.py`; code-review-graph `tests/` + `.github/workflows/ci.yml`; specter-1 `.github/workflows/ci.yml` (test-gates-deploy).
 
-**Injection — Default.** `tests/conftest.py` (SDK-boundary mocks, temp dirs) + `scripts/smoke.py` (`--stage ingest|e2e`) + `.github/workflows/ci.yml` (ruff + mypy + pytest + smoke). Tests assert against *contracts*, so they survive any adapter swap.
+**Adoption — Default.** `tests/conftest.py` (SDK-boundary mocks, temp dirs) + `scripts/smoke.py` (`--stage ingest|e2e`) + `.github/workflows/ci.yml` (ruff + mypy + pytest + smoke). Tests assert against *contracts*, so they survive any adapter swap.
 
 ## 8. Knowledge-graph retrieval — new Option (the one contract addition)
 
@@ -96,7 +96,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** code-review-graph `code_review_graph/graph.py` + `embeddings.py` (the light default to copy); PROVE `src/core/neo4j_client.py` + `src/qa/tools.py` `get_connected_evidence` (the hybrid-expand pattern); bloodtrail (reachability).
 
-**Injection — Option (pre-build contract addition).** Add a `GraphStore` Protocol and a `HybridRetriever` (implements the existing `Retriever`) behind a profile flag `retriever: vector|hybrid`. Default graph backend = **SQLite + NetworkX in-process** (light, no service, matches the "zero-service" deployment story); **Neo4j = heavy option** (trigger: >100k chunks or real multi-hop). Becomes a new row in `docs/stack-matrix.md` and a realized example of extensibility Move 2.
+**Adoption — Option (pre-build contract addition).** Add a `GraphStore` Protocol and a `HybridRetriever` (implements the existing `Retriever`) behind a profile flag `retriever: vector|hybrid`. Default graph backend = **SQLite + NetworkX in-process** (light, no service, matches the "zero-service" deployment story); **Neo4j = heavy option** (trigger: >100k chunks or real multi-hop). Becomes a new row in `docs/stack-matrix.md` and a realized example of extensibility Move 2.
 
 **YAGNI.** Multi-tenant ViewScope graph scoping (methodproof) — only if CHASSIS is re-skinned into a multi-tenant product.
 
@@ -106,7 +106,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** `THEMES/METHODPROOF.md` (+ SHINKAI/others); methodproof `methodproof-tokens/tokens.json` + `build.mjs`; the `[data-theme]` toggle in `methodproof-dashboard`.
 
-**Injection — Option, default theme = METHODPROOF.** `app/ui/tokens.json` + `app/ui/theme.py` (load tokens → inject CSS custom properties into Gradio via `Blocks(css=...)`). One `THEME` flag selects the palette. This is what makes the demo look intentional instead of default-Gradio-grey. Keep it to **one default theme + the swap mechanism**; do not port all 8.
+**Adoption — Option, default theme = METHODPROOF.** `app/ui/tokens.json` + `app/ui/theme.py` (load tokens → inject CSS custom properties into Gradio via `Blocks(css=...)`). One `THEME` flag selects the palette. This is what makes the demo look intentional instead of default-Gradio-grey. Keep it to **one default theme + the swap mechanism**; do not port all 8.
 
 ## 10. Data visualization — the four UI tabs
 
@@ -114,7 +114,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** methodproof-dashboard SwimLaneGraph/ThreadView + `docs/features/2026-04-12_graph-rubric.md`; PROVE `src/static/graph.js` (treemap/bars, SSE-accumulate); bloodtrail force graph; kata schema cards.
 
-**Injection — Default plain Gradio + ONE embedded D3 centerpiece (YAGNI on the rest).** All four tabs read the trace ring buffer on a `gr.Timer` tick. Chat tab embeds a **single** D3 router→specialist handoff swimlane (the centerpiece slide). Sources/Guardrails/Eval ship as Gradio tables/dataframes first; promote to D3 only if time allows. Reuse the METHODPROOF color tokens from §9 so encodings are consistent.
+**Adoption — Default plain Gradio + ONE embedded D3 centerpiece (YAGNI on the rest).** All four tabs read the trace ring buffer on a `gr.Timer` tick. Chat tab embeds a **single** D3 router→specialist handoff swimlane (the centerpiece slide). Sources/Guardrails/Eval ship as Gradio tables/dataframes first; promote to D3 only if time allows. Reuse the METHODPROOF color tokens from §9 so encodings are consistent.
 
 ## 11. Figma workflow — Option / process, low priority
 
@@ -122,7 +122,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** methodproof `docs/architecture/2026-04-09_brand-asset-manifest.md`; the `figma-*` skills; `THEMES/*.md` Figma source links.
 
-**Injection — Option, documented not coded.** A short process note: keep `app/ui/tokens.json` the source of truth; use `figma-generate-library` once to mirror tokens into a CHASSIS Figma file as reference; use `figma-generate-design` to push the Gradio four-tab concept into Figma for design critique. No automation/sync — overkill for a single Gradio consumer.
+**Adoption — Option, documented not coded.** A short process note: keep `app/ui/tokens.json` the source of truth; use `figma-generate-library` once to mirror tokens into a CHASSIS Figma file as reference; use `figma-generate-design` to push the Gradio four-tab concept into Figma for design critique. No automation/sync — overkill for a single Gradio consumer.
 
 ## 12. Documentation discipline — DNA (adopt light)
 
@@ -130,7 +130,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** methodproof `docs/INDEX.md`, `docs/NAMING_CONVENTION.md`, `CHANGELOG.md`, `ROADMAP.md`, `CLAUDE.md`.
 
-**Injection — Default, light.** Adopt the **dated-doc convention** (this file follows it) and add `CHANGELOG.md`, `ROADMAP.md`, and a CHASSIS `CLAUDE.md` hub. Keep `docs/` **flat** for now — the 12-subdirectory taxonomy is YAGNI until the doc count justifies it (trigger: docs/ exceeds ~15 files).
+**Adoption — Default, light.** Adopt the **dated-doc convention** (this file follows it) and add `CHANGELOG.md`, `ROADMAP.md`, and a CHASSIS `CLAUDE.md` hub. Keep `docs/` **flat** for now — the 12-subdirectory taxonomy is YAGNI until the doc count justifies it (trigger: docs/ exceeds ~15 files).
 
 ## 13. Agent / skill orchestration — build-method DNA
 
@@ -138,7 +138,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 **Sources.** SPICE `.claude/agents/_shared-standards.md`, `.claude/agents/*.md`, `.claude/skills/sp-operate/SKILL.md`, `services/orchestrator/.../supervisor/daemon.py`.
 
-**Injection — Deferred (Ralph harness).** `agents/*.yaml` + `skills/*/SKILL.md` + `ralph.py` adopt: a shared-standards file, frontmatter+phases+gates spec shape, and the wave/gate supervisor with acceptance-command verification (already the plan's false-completion guard). The four authored skills (`rag-agent-scaffold`, `eval-harness`, `architecture-diagram`, `slides`) follow the SKILL.md shape.
+**Adoption — Deferred (Ralph harness).** `agents/*.yaml` + `skills/*/SKILL.md` + `ralph.py` adopt: a shared-standards file, frontmatter+phases+gates spec shape, and the wave/gate supervisor with acceptance-command verification (already the plan's false-completion guard). The four authored skills (`rag-agent-scaffold`, `eval-harness`, `architecture-diagram`, `slides`) follow the SKILL.md shape.
 
 ---
 
@@ -146,7 +146,7 @@ The contracts in `lib/contracts.py` are frozen. This plan honors that:
 
 | Domain | Altitude | Lands in | Default backend / note |
 |--------|----------|----------|------------------------|
-| Guardrails (rails + judge + manager) | Default | `app/guardrails/` | named injection classes, methodproof PII, veridatum schema |
+| Guardrails (rails + judge + manager) | Default | `app/guardrails/` | named input-screening classes, methodproof PII, veridatum schema |
 | Structured logging + no-silent-failures | Default (mandate) | `lib/` logger + `CLAUDE.md` | subordinate to the trace bus |
 | Justfile | Default | `justfile` | dotenv-load, port-kill, env-driven deploy |
 | Docker | Default (profile-aware) | `docker-compose*.yml`, `Dockerfile`, `Caddyfile` | Qdrant→compose; Chroma/FAISS→Dockerfile |

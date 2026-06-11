@@ -10,7 +10,7 @@ The flexibility mechanism in one sentence: `lib/contracts.py` defines what each 
 
 ## Status
 
-Built and verified offline (71 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `ingestion` + `SimpleRetriever`; the full ingest + e2e smoke gates; docker/justfile; all four Wave 1 layers (`guardrails`, `memory`, `orchestration`, `eval`); and the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place) and the Ralph build harness. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
+Built and verified offline (66 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `ingestion` + `SimpleRetriever`; the full ingest + e2e smoke gates; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); and the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place) and the Ralph build harness. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
 
 The whole system runs with **zero keys/services/deps** via the `memory` profile; swap to the real stack by changing one profile flag.
 
@@ -22,7 +22,7 @@ Flat, multi-package layout — `lib/`, `app/`, `config/` are top-level importabl
 lib/     shared infra — contracts, registry, trace bus, adapters, ingestion
 app/     domain layers — orchestration, memory, guardrails, eval, ui
 config/  env-driven settings + named stack profiles
-docs/    architecture, extensibility, stack matrix, dated reference docs
+docs/    categorical subdirs — architecture/, guides/, reference/, plans/, features/, runbooks/
 ```
 
 ## Commands
@@ -42,7 +42,7 @@ Adapter deps are `[project.optional-dependencies]` groups — `uv sync` installs
 
 ## Architecture
 
-Read [docs/architecture.md](docs/architecture.md) — repo map, the flexibility mechanism, the trace bus, life-of-a-question flow, and the contract-type reference. Do not inline that content here.
+Read [docs/architecture/architecture.md](docs/architecture/architecture.md) — repo map, the flexibility mechanism, the trace bus, life-of-a-question flow, and the contract-type reference. Do not inline that content here.
 
 ### The two couplings (the only cross-layer constraints)
 
@@ -53,7 +53,7 @@ Read [docs/architecture.md](docs/architecture.md) — repo map, the flexibility 
 
 `lib/contracts.py` is frozen. Adapters and app layers code against it and never propose changes mid-build. If a contract seems wrong, log the complaint and work around it — contract churn is how parallel builds die. The one sanctioned pre-build addition (a `GraphStore` Protocol + `GraphNode`/`GraphEdge` for the knowledge-graph option, recon plan §8) was made 2026-06-09; contracts are **re-frozen** as of that change. No further edits in flight.
 
-To extend without touching contracts, see [docs/extensibility.md](docs/extensibility.md): add an adapter (implement the Protocol → one registry line → reference in a profile), add a profile, or re-skin into a new project.
+To extend without touching contracts, see [docs/guides/extensibility.md](docs/guides/extensibility.md): add an adapter (implement the Protocol → one registry line → reference in a profile), add a profile, or re-skin into a new project.
 
 ## Engineering standards (mandates)
 
@@ -69,13 +69,13 @@ To extend without touching contracts, see [docs/extensibility.md](docs/extensibi
 
 | Doc | Contents |
 |-----|----------|
-| [docs/architecture.md](docs/architecture.md) | system at rest, trace bus, query flow, couplings |
-| [docs/extensibility.md](docs/extensibility.md) | add an adapter/layer/profile; re-skin into a new project |
-| [docs/stack-matrix.md](docs/stack-matrix.md) | per-layer pro/cons matrix, defaults, switch triggers |
-| [docs/2026-06-09_workspace-recon-injection-plan.md](docs/2026-06-09_workspace-recon-injection-plan.md) | workspace recon → which patterns enter CHASSIS (default/option/deferred/YAGNI) |
+| [docs/architecture/architecture.md](docs/architecture/architecture.md) | system at rest, trace bus, query flow, couplings |
+| [docs/guides/extensibility.md](docs/guides/extensibility.md) | add an adapter/layer/profile; re-skin into a new project |
+| [docs/reference/stack-matrix.md](docs/reference/stack-matrix.md) | per-layer pro/cons matrix, defaults, switch triggers |
+| [docs/plans/2026-06-09_workspace-recon-plan.md](docs/plans/2026-06-09_workspace-recon-plan.md) | workspace recon → which patterns enter CHASSIS (default/option/deferred/YAGNI) |
 | [ROADMAP.md](ROADMAP.md) | build order per layer/wave |
 | [CHANGELOG.md](CHANGELOG.md) | what has shipped |
 
 ## Documentation discipline
 
-Dated reference docs follow `YYYY-MM-DD_slug.md`. Keep `docs/` flat until it justifies a taxonomy (trigger: ~15+ files). This `CLAUDE.md` is a navigation hub, not a knowledge sink — point at docs, do not inline.
+`docs/` is categorical: `architecture/` (system shape), `guides/` (how-to), `reference/` (lookup matrices), `plans/` (dated planning/decision records), `features/` (dated feature docs), `runbooks/` (ops). Dated docs follow `YYYY-MM-DD_slug.md` and live in `plans/` or `features/`. This `CLAUDE.md` is a navigation hub, not a knowledge sink — point at docs, do not inline.

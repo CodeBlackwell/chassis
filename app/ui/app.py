@@ -42,7 +42,7 @@ def build_app(
         with gr.Tab("Eval"):
             corpus = gr.Textbox(label="Corpus folder", placeholder="/path/to/docs")
             run = gr.Button("Run eval")
-            metrics = gr.Dataframe(headers=fmt.EVAL_HEADERS)
+            metrics = gr.Dataframe(headers=fmt.EVAL_BASE_HEADERS)
 
         def on_ask(text: str) -> tuple[str, str, list[list[str]], list[list[str]]]:
             result = orchestrator.handle(text)
@@ -56,6 +56,11 @@ def build_app(
         question.submit(on_ask, question, [route, answer, sources, guardrails])
 
         if eval_fn is not None:
-            run.click(lambda path: fmt.eval_rows(eval_fn(path)), corpus, metrics)
+
+            def on_eval(path: str) -> Any:
+                headers, data = fmt.eval_table(eval_fn(path))
+                return gr.Dataframe(value=data, headers=headers)
+
+            run.click(on_eval, corpus, metrics)
 
     return demo

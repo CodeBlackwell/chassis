@@ -69,12 +69,15 @@ A profile is a named stack — the fastest way to flip an entire backend.
 
 ```yaml
 # config/profiles/chroma-inmem.yaml
-llm:         {impl: anthropic, model: claude-sonnet-4-6}
-embedder:    {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
-vectorstore: {impl: chroma}          # in-process, no service
-ingestion:   {chunk_size: 800, overlap: 120}
-retrieval:   {k: 5}
-memory:      {window: 8, recall_k: 3}
+llm:          {impl: anthropic, model: claude-sonnet-4-6}
+embedder:     {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
+vectorstore:  {impl: chroma}          # in-process, no service
+ingestion:    {chunk_size: 800, overlap: 120}
+retriever:    {impl: simple}
+memory:       {impl: buffer, window: 8, recall_k: 3}
+guardrail:    {impl: default, block_pii: true, min_overlap: 0.3}
+orchestrator: {impl: default, k: 5}
+evaluator:    {impl: ragas}
 ```
 
 **The live-pivot mechanism.** `settings.py` resolves the profile first, then lets individual env vars override any layer:
@@ -104,4 +107,4 @@ If a new project finds itself editing `lib/`, that is a signal to add an adapter
 - **Contracts are frozen before a build.** Adapters and app layers code against them and never propose changes mid-build.
 - **Complaints are logged, not patched.** If an implementation believes a contract is wrong, it records the issue and works around it; the contract is revisited between builds.
 - **Path ownership.** Each layer owns its directory. An adapter edits only its own package plus its one-line registry entry. Cross-package edits during a parallel build are reverted — that is the cheap insurance contracts alone cannot provide.
-- **Mind the two couplings** (see [architecture.md](architecture.md)): vector-DB choice drives deployment, and embedder dimension is frozen at ingest. Everything else is freely swappable.
+- **Mind the two couplings** (see [architecture.md](../architecture/architecture.md)): vector-DB choice drives deployment, and embedder dimension is frozen at ingest. Everything else is freely swappable.

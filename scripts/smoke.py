@@ -13,12 +13,8 @@ import argparse
 import sys
 import uuid
 
-from app.guardrails.guard import DefaultGuardrail
-from app.memory.buffer import BufferMemory
-from app.orchestration.orchestrator import DefaultOrchestrator
 from config.settings import Settings
 from lib.ingestion.pipeline import ingest
-from lib.retriever import SimpleRetriever
 from lib.trace import TraceBus
 
 
@@ -31,28 +27,27 @@ def _build(profile, corpus, bus):
         corpus, embedder, store, trace=bus,
         chunk_size=ing.get("chunk_size", 800), overlap=ing.get("overlap", 120),
     )
-    k = settings.layers.get("retrieval", {}).get("k", 5)
-    return settings, embedder, store, chunks, k
+    return settings, embedder, store, chunks
 
 
 def ingest_stage(corpus, profile=None, query="overview"):
     bus = TraceBus(run_id=uuid.uuid4().hex[:8])
-    _, embedder, store, chunks, k = _build(profile, corpus, bus)
-    hits = SimpleRetriever(embedder, store).retrieve(query, k=3)
+    settings, embedder, store, chunks = _build(profile, corpus, bus)
+    retriever = settings.build("retriever", embedder=embedder, store=store)
+    hits = retriever.retrieve(query, k=3)
     bus.emit("smoke", "done", chunks=len(chunks), hits=len(hits))
     return chunks, hits, bus
 
 
 def e2e_stage(corpus, profile=None, query="What is this about?"):
     bus = TraceBus(run_id=uuid.uuid4().hex[:8])
-    _, embedder, store, chunks, k = _build(profile, corpus, bus)
-    orchestrator = DefaultOrchestrator(
-        SimpleRetriever(embedder, store),
-        BufferMemory(embedder, store, collection="memory"),
-        DefaultGuardrail(),
-        llm=None,
+    settings, embedder, store, chunks = _build(profile, corpus, bus)
+    orchestrator = settings.build(
+        "orchestrator",
+        retriever=settings.build("retriever", embedder=embedder, store=store),
+        memory=settings.build("memory", embedder=embedder, store=store),
+        guardrail=settings.build("guardrail"),
         trace=bus,
-        k=k,
     )
     return chunks, orchestrator.handle(query), bus
 

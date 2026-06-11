@@ -98,4 +98,4 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | `Guardrail` | Protocol | `check_input`, `check_output -> Verdict` |
 | `Evaluator` | Protocol | `run(rows) -> EvalRow[]` |
 
-See [extensibility.md](extensibility.md) to add an adapter or a layer, and [stack-matrix.md](stack-matrix.md) for the per-layer option trade-offs.
+See [extensibility.md](../guides/extensibility.md) to add an adapter or a layer, and [stack-matrix.md](../reference/stack-matrix.md) for the per-layer option trade-offs.

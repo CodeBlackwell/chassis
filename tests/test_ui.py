@@ -44,14 +44,11 @@ def test_guardrail_rows_filter_and_shape():
     assert rows[0][3] == "x"
 
 
-def test_eval_rows_columns():
-    row = EvalRow(
-        "q", "g", answer="a",
-        scores={"faithfulness": 0.5, "answer_relevance": 0.2, "context_precision": 1.0},
-    )
-    [out] = fmt.eval_rows([row])
-    assert out[0] == "q"
-    assert out[2] == "0.50"
+def test_eval_table_derives_columns_from_scores():
+    row = EvalRow("q", "g", answer="a", scores={"judge": 1.0, "faithfulness": 0.5})
+    headers, [out] = fmt.eval_table([row])
+    assert headers == ["question", "answer", "faithfulness", "judge"]
+    assert out == ["q", "a", "0.50", "1.00"]
 
 
 def test_build_app_constructs():

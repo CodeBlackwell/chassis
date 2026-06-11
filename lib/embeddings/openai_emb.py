@@ -1,6 +1,6 @@
 """OpenAI adapter for the Embedder contract. text-embedding-3-small is 1536-dim;
 that dim is fixed at construction and frozen into the collection at ingest (see
-the embedder-dim coupling in docs/architecture.md). Lazy SDK import."""
+the embedder-dim coupling in docs/architecture/architecture.md). Lazy SDK import."""
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any

@@ -10,7 +10,7 @@ from lib.contracts import Answer, EvalRow, TraceEvent
 TRACE_HEADERS = ["ts", "component", "event", "payload"]
 SOURCE_HEADERS = ["chunk", "text"]
 GUARDRAIL_HEADERS = ["ts", "stage", "passed", "reasons"]
-EVAL_HEADERS = ["question", "answer", "faithfulness", "answer_relevance", "context_precision"]
+EVAL_BASE_HEADERS = ["question", "answer"]
 
 
 def trace_rows(events: Sequence[TraceEvent]) -> list[list[str]]:
@@ -32,14 +32,11 @@ def source_rows(answer: Answer) -> list[list[str]]:
     ]
 
 
-def eval_rows(rows: Sequence[EvalRow]) -> list[list[str]]:
-    out = []
-    for r in rows:
-        out.append([
-            r.question,
-            (r.answer or "")[:80],
-            f"{r.scores.get('faithfulness', 0.0):.2f}",
-            f"{r.scores.get('answer_relevance', 0.0):.2f}",
-            f"{r.scores.get('context_precision', 0.0):.2f}",
-        ])
-    return out
+def eval_table(rows: Sequence[EvalRow]) -> tuple[list[str], list[list[str]]]:
+    # columns come from the score dicts, so any Evaluator's metrics render
+    keys = sorted({k for r in rows for k in r.scores})
+    data = [
+        [r.question, (r.answer or "")[:80], *(f"{r.scores.get(k, 0.0):.2f}" for k in keys)]
+        for r in rows
+    ]
+    return [*EVAL_BASE_HEADERS, *keys], data

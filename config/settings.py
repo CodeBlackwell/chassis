@@ -12,7 +12,10 @@ import yaml
 from dotenv import load_dotenv
 
 _PROFILES = Path(__file__).parent / "profiles"
-_OVERRIDABLE = ("llm", "embedder", "vectorstore", "graphstore")
+_OVERRIDABLE = (
+    "llm", "embedder", "vectorstore", "graphstore",
+    "retriever", "memory", "guardrail", "orchestrator", "evaluator",
+)
 
 
 @dataclass
@@ -26,10 +29,12 @@ class Settings:
     def config(self, layer: str) -> dict[str, Any]:
         return {k: v for k, v in self.layers[layer].items() if k != "impl"}
 
-    def build(self, layer: str) -> Any:
+    def build(self, layer: str, **extra: Any) -> Any:
+        # extra carries constructed dependencies (embedder=, store=, trace=...)
+        # that profile YAML can't express
         from lib.registry import build
 
-        return build(layer, self.impl(layer), **self.config(layer))
+        return build(layer, self.impl(layer), **{**self.config(layer), **extra})
 
     @classmethod
     def load(cls, profile: str | None = None) -> "Settings":
