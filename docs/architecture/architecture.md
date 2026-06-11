@@ -29,6 +29,7 @@ app/
   guardrails/       input + output + LLM judge                  [deferred]
   eval/             metrics + LLM-as-judge + runner             [deferred]
   ui/               dashboard, tabs read the trace bus          [deferred]
+  api/              JSON endpoints over the orchestrator seam    [present]
 config/
   settings.py       env-driven config; resolves impls           [deferred]
   defaults.py       centralized tuning knobs (k, windows, ports) [present]
@@ -81,7 +82,9 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | Type | Kind | Role |
 |------|------|------|
 | `Message` | dataclass | one chat message (role + content) |
-| `LLMResponse` | dataclass | LLM output (text, model, token usage) |
+| `LLMResponse` | dataclass | LLM output (text, model, token usage, requested tool calls) |
+| `ToolSpec` | dataclass | a tool offered to the model (name, description, JSON-Schema parameters) |
+| `ToolCall` | dataclass | one tool invocation the model requested (id, name, arguments) |
 | `Chunk` | dataclass | a unit of ingested text (id, text, source, meta) |
 | `SearchResult` | dataclass | a chunk plus its similarity score |
 | `GraphNode` | dataclass | a node in the optional knowledge graph (id, kind, meta) |
@@ -92,9 +95,9 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | `EvalRow` | dataclass | one eval record (question, ground truth, answer, contexts, scores) |
 | `Answer` | dataclass | orchestrator output (text, route, citations, contexts) |
 | `TraceEvent` | dataclass | one event on the trace bus |
-| `LLM` | Protocol | `chat(messages) -> LLMResponse` |
+| `LLM` | Protocol | `chat(messages, tools=) -> LLMResponse`; tool loop in `app/orchestration/tools.py` |
 | `Embedder` | Protocol | `dim`, `embed(texts) -> vectors` |
-| `VectorStore` | Protocol | `ensure_collection`, `upsert`, `search` |
+| `VectorStore` | Protocol | `ensure_collection`, `upsert`, `delete`, `search` |
 | `GraphStore` | Protocol | optional: `upsert(nodes, edges)`, `neighbors(node_id)` for graph-expand retrieval |
 | `Retriever` | Protocol | `retrieve(query, k) -> SearchResult[]` |
 | `Orchestrator` | Protocol | `handle(query) -> Answer` |

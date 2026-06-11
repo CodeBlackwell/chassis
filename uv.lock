@@ -554,6 +554,10 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+api = [
+    { name = "fastapi" },
+    { name = "uvicorn" },
+]
 embeddings-openai = [
     { name = "openai" },
 ]
@@ -593,6 +597,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'llm-anthropic'" },
     { name = "chromadb", marker = "extra == 'vectorstore-chroma'" },
     { name = "faiss-cpu", marker = "extra == 'vectorstore-faiss'" },
+    { name = "fastapi", marker = "extra == 'api'" },
     { name = "gradio", marker = "extra == 'ui'" },
     { name = "numpy", marker = "extra == 'vectorstore-faiss'" },
     { name = "openai", marker = "extra == 'embeddings-openai'" },
@@ -601,8 +606,9 @@ requires-dist = [
     { name = "pyyaml" },
     { name = "qdrant-client", marker = "extra == 'vectorstore-qdrant'" },
     { name = "sentence-transformers", marker = "extra == 'embeddings-sbert'" },
+    { name = "uvicorn", marker = "extra == 'api'" },
 ]
-provides-extras = ["llm-anthropic", "llm-openai", "embeddings-sbert", "embeddings-openai", "vectorstore-qdrant", "vectorstore-chroma", "vectorstore-faiss", "ui"]
+provides-extras = ["llm-anthropic", "llm-openai", "embeddings-sbert", "embeddings-openai", "vectorstore-qdrant", "vectorstore-chroma", "vectorstore-faiss", "ui", "api"]
 
 [package.metadata.requires-dev]
 dev = [

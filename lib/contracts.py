@@ -6,9 +6,13 @@ layer is built: adapters and app layers code against them and never propose chan
 mid-build. If an implementation thinks a contract is wrong, it logs the complaint and
 works around it — contract churn is how parallel builds die.
 
-The knowledge-graph option (GraphNode / GraphEdge / GraphStore) was added 2026-06-09
-as the single deliberate pre-build extension (extensibility Move 2). Contracts are
-re-frozen as of that addition; no further changes in flight.
+Three deliberate between-build extensions (extensibility Move 2) have been made:
+the knowledge-graph option (GraphNode / GraphEdge / GraphStore, 2026-06-09);
+tool-calling (ToolSpec / ToolCall, additive fields on Message / LLMResponse, and a
+`tools=` kwarg on LLM.chat — all defaulted, so existing adapters and callers are
+untouched); and VectorStore.delete for corpus freshness (removed source documents
+were previously unremovable; both 2026-06-11). Contracts are re-frozen as of these;
+no further changes in flight.
 
 Rules of engagement:
 - Sync everywhere. No async at this scale; it buys nothing and costs debugging time.
@@ -24,9 +28,25 @@ from typing import Any, Literal, Protocol
 
 
 @dataclass
+class ToolSpec:
+    name: str
+    description: str
+    parameters: dict[str, Any] = field(default_factory=dict)  # JSON Schema for arguments
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class Message:
-    role: Literal["system", "user", "assistant"]
+    role: Literal["system", "user", "assistant", "tool"]
     content: str
+    tool_calls: list[ToolCall] = field(default_factory=list)  # assistant turns requesting tools
+    tool_call_id: str | None = None  # tool turns: which call this result answers
 
 
 @dataclass
@@ -34,6 +54,7 @@ class LLMResponse:
     text: str
     model: str
     usage: dict[str, int] = field(default_factory=dict)
+    tool_calls: list[ToolCall] = field(default_factory=list)
 
 
 @dataclass
@@ -121,6 +142,7 @@ class LLM(Protocol):
         *,
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        tools: Sequence[ToolSpec] = (),
     ) -> LLMResponse: ...
 
 
@@ -140,6 +162,8 @@ class VectorStore(Protocol):
         chunks: Sequence[Chunk],
         vectors: Sequence[list[float]],
     ) -> None: ...
+
+    def delete(self, collection: str, ids: Sequence[str]) -> None: ...
 
     def search(
         self,

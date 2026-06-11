@@ -48,7 +48,7 @@ vectorstore: {impl: memory}            vectorstore: {impl: qdrant}
 
 | Seam | Contract | Ships working | Also wired in the registry |
 |------|----------|---------------|----------------------------|
-| Language model | `LLM` | Ollama (local), with a no-LLM extractive fallback | Anthropic, OpenAI |
+| Language model | `LLM` | Ollama (local), no-LLM extractive fallback, native tool-calling (`tools=` + `run_tool_loop`) | Anthropic, OpenAI |
 | Embeddings | `Embedder` | feature-hashing (zero-dep) | MiniLM, bge, OpenAI |
 | Vector search | `VectorStore` | in-process cosine | Qdrant, Chroma, FAISS |
 | Retrieval | `Retriever` | vector-only | hybrid graph-RAG (`GraphStore` contract in place) |
@@ -63,6 +63,16 @@ switch live in [the stack matrix](docs/reference/stack-matrix.md). The same prin
 numbers: every tunable int/string (retrieval `k`, memory window, token budgets, eval thresholds,
 ports) lives centralized in `config/defaults.py`, with profiles overriding per stack.
 
+## Step zero — survey before you build
+
+For Claude Code users the repo ships a `/survey` skill that runs **first on every new
+assignment**: it classifies the problem against the [deliberation layers](docs/reference/deliberation-layers.md),
+then walks only the genuinely contested layers (plus the two irreversible couplings) as
+multiple-choice questions — each option carrying the pros, cons, and a "choose when"
+situational breakdown from the [stack matrix](docs/reference/stack-matrix.md) — and saves a
+dated decision record to `docs/plans/` before any code is written. The reference docs are the
+knowledge; the survey is how they get used under time pressure.
+
 ## Walkthrough — from a folder of documents to a deployed assistant
 
 The shape CHASSIS is optimized for: **an assistant over a private corpus** — a team handbook,
@@ -72,7 +82,7 @@ product docs, a contract archive, a research pile. The domain changes; the seque
 Loading and chunking are domain decisions — formats, chunk boundaries, metadata all depend on
 the corpus — and a pre-built loader is the first thing a real project rips out. What the base
 ships is the seam, three contract calls that any loader plugs into, from a ten-line folder
-walker to a layout-aware Docling pipeline:
+walker to a full layout-aware parsing pipeline:
 
 ```python
 from config.settings import Settings
@@ -88,8 +98,7 @@ store.upsert("chassis", chunks, embedder.embed([c.text for c in chunks]))
 > **Behind the scenes:** `Settings.load("memory")` reads the profile YAML and the registry
 > lazy-imports only the implementations it names — `HashingEmbedder`, `MemoryStore` — nothing
 > else is even imported. **This is the moment coupling #2 engages:** the collection's dimension
-> is now fixed to this embedder family. Loader options (LangChain/LlamaIndex, Unstructured,
-> Docling, hand-rolled) and chunking best practices live in the
+> is now fixed to this embedder family. Loader options and chunking best practices live in the
 > [stack matrix](docs/reference/stack-matrix.md)'s Ingestion section.
 
 **2 — Talk to it, and watch it think.**
@@ -187,6 +196,11 @@ The dashboard (`just dev`) puts that front and center — **Chat** with cited so
 showing what retrieval actually returned, **Guardrails** verdicts, and **Eval** scores, all
 reading the same trace bus, themed via a single `tokens.json`.
 
+Prefer JSON over a dashboard? `just api` serves the same orchestrator on :8001 — `POST /ask`
+returns the full `Answer` (text, route, citations, contexts), `GET /trace` the same event
+stream the tabs read. No auth, rate limiting, or CORS by design: like guardrails, that's
+per-project policy on a wired seam.
+
 ## Judge it, don't vibe it
 
 `app/eval/` generates a gold set from your chunks, runs the questions through the orchestrator,
@@ -219,11 +233,12 @@ after. See the [runbook](docs/runbooks/ralph-army.md).
 | [Architecture](docs/architecture/architecture.md) | the system at rest, the trace bus, life of a question |
 | [Extensibility](docs/guides/extensibility.md) | add an adapter, add a layer, re-skin into a new project |
 | [Stack matrix](docs/reference/stack-matrix.md) | per-layer trade-offs, defaults, switch triggers |
+| [Deliberation layers](docs/reference/deliberation-layers.md) | which layers a scenario actually contests, and what decides each |
 | [Ralph runbook](docs/runbooks/ralph-army.md) | the autonomous build harness |
 
 ## Status
 
-Built and verified offline: 62 tests, `mypy` + `ruff` clean on the zero-dep profile.
+Built and verified offline: 79 tests, `mypy` + `ruff` clean on the zero-dep profile.
 Real-backend round-trips (cloud keys, Qdrant service) and the knowledge-graph retriever are the
 open edges — the contracts for both are already frozen.
 

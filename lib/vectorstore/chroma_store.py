@@ -35,6 +35,9 @@ class ChromaStore:
             metadatas=[{"source": c.source} for c in chunks],
         )
 
+    def delete(self, collection: str, ids: Sequence[str]) -> None:
+        self._get_client().get_or_create_collection(collection).delete(ids=list(ids))
+
     def search(self, collection: str, vector: list[float], k: int = 5) -> list[SearchResult]:
         col = self._get_client().get_or_create_collection(collection)
         res = col.query(query_embeddings=[vector], n_results=k)

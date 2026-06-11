@@ -51,6 +51,13 @@ class QdrantStore:
         ]
         self._get_client().upsert(collection, points)
 
+    def delete(self, collection: str, ids: Sequence[str]) -> None:
+        from qdrant_client.models import PointIdsList
+
+        # point ids are uuid5(chunk id) — mirror the upsert mapping
+        points = [str(uuid.uuid5(uuid.NAMESPACE_URL, cid)) for cid in ids]
+        self._get_client().delete(collection, points_selector=PointIdsList(points=points))
+
     def search(self, collection: str, vector: list[float], k: int = 5) -> list[SearchResult]:
         hits = self._get_client().search(collection, query_vector=vector, limit=k)
         out: list[SearchResult] = []

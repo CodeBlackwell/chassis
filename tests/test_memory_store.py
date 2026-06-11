@@ -36,3 +36,15 @@ def test_upsert_dedupes_by_id():
 
 def test_search_missing_collection_returns_empty():
     assert MemoryStore().search("nope", [1.0]) == []
+
+
+def test_delete_removes_only_named_ids():
+    store = MemoryStore()
+    store.upsert("c", [_chunk("a", "a"), _chunk("b", "b")], [[1.0, 0.0], [0.0, 1.0]])
+    store.delete("c", ["a", "ghost"])
+    hits = store.search("c", [1.0, 0.0], k=5)
+    assert [h.chunk.id for h in hits] == ["b"]
+
+
+def test_delete_missing_collection_is_a_noop():
+    MemoryStore().delete("nope", ["a"])

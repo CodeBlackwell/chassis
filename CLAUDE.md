@@ -8,11 +8,22 @@ A contracts-first base repo for sophisticated multi-agent RAG projects. Not a si
 
 The flexibility mechanism in one sentence: `lib/contracts.py` defines what each layer must do, the `lib/*/` adapters implement it, a registry picks one from config, and named profiles switch a whole backend with a single flag.
 
+**Deletable by design.** A direct consequence of the concept: any real project built on CHASSIS will contain code it should delete. The base ships several options per seam, so when a project picks option C, the adapters for options A and B are dead weight — deliberately cheap dead weight, since each is one file plus one registry line. Deleting the unchosen options is an expected re-skin step, not a smell.
+
 ## Status
 
-Built and verified offline (62 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `SimpleRetriever`; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`); and the Ralph army build harness (`scripts/ralph.py` + `prds/` bundles + the `/prd` skill — see [docs/runbooks/ralph-army.md](docs/runbooks/ralph-army.md)). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place). Deliberately not shipped: an ingestion pipeline — loading/chunking is per-project; the seam is `Chunk` → `Embedder` → `VectorStore.upsert`, and the stack matrix's Ingestion section carries the options. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
+Built and verified offline (79 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); tool-calling on the LLM contract (`ToolSpec`/`ToolCall`, provider-native mappings in all three LLM adapters, and the generic `run_tool_loop` in `app/orchestration/tools.py` — the loop ships, the tools are per-project); `SimpleRetriever`; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`); the JSON API (`app/api`, `python -m app.api` — `POST /ask` + `GET /trace` over the same orchestrator seam, no auth/CORS by design); and the Ralph army build harness (`scripts/ralph.py` + `prds/` bundles + the `/prd` skill — see [docs/runbooks/ralph-army.md](docs/runbooks/ralph-army.md)). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place). Deliberately not shipped: an ingestion pipeline — loading/chunking is per-project; the seam is `Chunk` → `Embedder` → `VectorStore.upsert`, and the stack matrix's Ingestion section carries the options. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
 
 The whole system runs with **zero keys/services/deps** via the `memory` profile; swap to the real stack by changing one profile flag.
+
+## Survey first — in all circumstances
+
+On receiving any new assignment, task, or feature request — **before planning, PRD writing, or
+code** — run the `/survey` skill (`.claude/skills/survey/SKILL.md`). It walks the assignment
+through the deliberation layers as a multiple-choice survey (options, pros/cons, and a
+situational breakdown per undecided layer, sourced from the two reference docs) and saves a
+dated decision record under `docs/plans/` before anything proceeds. The two couplings are
+always asked; uncontested layers auto-default. Subsequent work honors the record.
 
 ## Layout
 
@@ -35,6 +46,7 @@ just setup                           # uv sync (dev group: ruff, mypy, pytest)
 just test                            # pytest
 just lint                            # ruff + mypy (must stay clean)
 just dev                             # launch the dashboard on :8000 (--extra ui)
+just api                             # launch the JSON API on :8001 (--extra api)
 just ralph prds/<slug>               # Ralph solo build loop (just army … for gated waves)
 ```
 
@@ -51,7 +63,7 @@ Read [docs/architecture/architecture.md](docs/architecture/architecture.md) — 
 
 ## Frozen contracts — the prime directive
 
-`lib/contracts.py` is frozen. Adapters and app layers code against it and never propose changes mid-build. If a contract seems wrong, log the complaint and work around it — contract churn is how parallel builds die. The one sanctioned pre-build addition (a `GraphStore` Protocol + `GraphNode`/`GraphEdge` for the knowledge-graph option, recon plan §8) was made 2026-06-09; contracts are **re-frozen** as of that change. No further edits in flight.
+`lib/contracts.py` is frozen. Adapters and app layers code against it and never propose changes mid-build. If a contract seems wrong, log the complaint and work around it — contract churn is how parallel builds die. Three sanctioned between-build additions have been made: the knowledge-graph option (`GraphStore` Protocol + `GraphNode`/`GraphEdge`, recon plan §8, 2026-06-09), tool-calling (`ToolSpec`/`ToolCall`, additive defaulted fields on `Message`/`LLMResponse`, `tools=` kwarg on `LLM.chat`), and `VectorStore.delete` for corpus freshness (both 2026-06-11). Contracts are **re-frozen** as of these. No further edits in flight.
 
 To extend without touching contracts, see [docs/guides/extensibility.md](docs/guides/extensibility.md): add an adapter (implement the Protocol → one registry line → reference in a profile), add a profile, or re-skin into a new project.
 
@@ -73,6 +85,7 @@ To extend without touching contracts, see [docs/guides/extensibility.md](docs/gu
 | [docs/architecture/architecture.md](docs/architecture/architecture.md) | system at rest, trace bus, query flow, couplings |
 | [docs/guides/extensibility.md](docs/guides/extensibility.md) | add an adapter/layer/profile; re-skin into a new project |
 | [docs/reference/stack-matrix.md](docs/reference/stack-matrix.md) | per-layer pro/cons matrix, defaults, switch triggers |
+| [docs/reference/deliberation-layers.md](docs/reference/deliberation-layers.md) | which layers need deliberating per scenario; contested-layers map |
 | [docs/plans/2026-06-09_workspace-recon-plan.md](docs/plans/2026-06-09_workspace-recon-plan.md) | workspace recon → which patterns enter CHASSIS (default/option/deferred/YAGNI) |
 | [ROADMAP.md](ROADMAP.md) | build order per layer/wave |
 | [CHANGELOG.md](CHANGELOG.md) | what has shipped |

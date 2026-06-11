@@ -20,6 +20,7 @@ vectorstore-qdrant = ["qdrant-client"]
 vectorstore-chroma = ["chromadb"]
 vectorstore-faiss = ["faiss-cpu", "numpy"]
 ui = ["gradio"]
+api = ["fastapi", "uvicorn"]
 
 [build-system]
 requires = ["hatchling"]

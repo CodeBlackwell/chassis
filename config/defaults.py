@@ -21,6 +21,9 @@ LLM_TEMPERATURE = 0.0
 LLM_MAX_TOKENS = 1024
 OLLAMA_HOST = "http://localhost:11434"   # OLLAMA_HOST env fallback — lib/llm/ollama_llm.py
 
+# tools
+TOOL_LOOP_MAX_ITERS = 5              # tool rounds per query — app/orchestration/tools.py
+
 # extractive fallbacks (no-LLM answers) — app/orchestration/specialists.py (answer_synthesis)
 EXTRACTIVE_SNIPPET_CHARS = 200       # chars kept per snippet in a joined answer
 EXTRACTIVE_MAX_SNIPPETS = 3          # snippets joined per synthesis answer
@@ -41,3 +44,7 @@ RUNS_DIR = "runs"                    # per-run JSONL sink directory
 # ui — both consumed by app/ui/__main__.py (demo.launch)
 UI_HOST = "0.0.0.0"
 UI_PORT = 8000
+
+# api — both consumed by app/api/__main__.py (uvicorn.run); 8001 so it coexists with the ui
+API_HOST = "0.0.0.0"
+API_PORT = 8001

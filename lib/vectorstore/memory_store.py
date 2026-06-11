@@ -36,6 +36,12 @@ class MemoryStore:
         kept.extend(incoming.values())
         self._cols[collection] = kept
 
+    def delete(self, collection: str, ids: Sequence[str]) -> None:
+        if collection not in self._cols:
+            return
+        drop = set(ids)
+        self._cols[collection] = [p for p in self._cols[collection] if p[0].id not in drop]
+
     def search(self, collection: str, vector: list[float], k: int = 5) -> list[SearchResult]:
         scored = [
             SearchResult(chunk=c, score=_cosine(vector, v))

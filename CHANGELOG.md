@@ -6,6 +6,68 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
 
 ### Added
 
+- **Tool-calling on the LLM contract (sanctioned between-build extension, 2026-06-11).**
+  `ToolSpec` + `ToolCall` dataclasses; `Message` gains a `tool` role, `tool_calls`, and
+  `tool_call_id`; `LLMResponse` gains `tool_calls`; `LLM.chat` gains a `tools=` kwarg.
+  All additive with defaults — existing adapters and callers untouched. All three LLM
+  adapters map to their provider's native tool API (Anthropic `tool_use`/`tool_result`
+  blocks, OpenAI function tool-calls, Ollama function format with synthesized call ids)
+  via pure offline-tested helpers. `app/orchestration/tools.py` ships `run_tool_loop` —
+  the generic call → execute → feed-back loop (round budget in
+  `config/defaults.py:TOOL_LOOP_MAX_ITERS`, unknown tool names fed back to the model and
+  traced, never raised). Per the philosophy, CHASSIS ships the loop and the seam, not the
+  tools. 10 new tests; 72 total.
+- **JSON API layer (`app/api`).** `create_app(orchestrator, bus)` — a thin FastAPI app over
+  the same `handle(query) -> Answer` seam the UI and eval consume: `POST /ask` (the `Answer`
+  dataclass as JSON), `GET /trace` (the trace-bus ring, filterable by component prefix),
+  `GET /health`. Handlers are sync (FastAPI threadpool — the no-async mandate holds); no
+  auth/rate-limiting/CORS by design — per-project policy on a wired seam. `python -m app.api`
+  assembles the stack from the active profile exactly like the dashboard; `just api` serves
+  on :8001 (`config/defaults.py:API_HOST/API_PORT`); `api` optional-dependency group
+  (fastapi + uvicorn). 5 new tests; 77 total.
+- **`VectorStore.delete(collection, ids)` (sanctioned between-build extension, 2026-06-11).**
+  The corpus-freshness hole: with stable chunk ids, `upsert` already overwrites changed chunks,
+  but chunks whose source document disappeared were unremovable. All four stores implement it —
+  memory (filter), FAISS (`remove_ids` by position, parallel chunk list kept aligned), Chroma
+  (native `delete`), Qdrant (uuid5 point-id mapping mirrored from upsert). The re-run/diff
+  pattern is documented in the stack matrix's Ingestion section ("freshness is a re-run, not a
+  pipeline"); scheduling stays per-project. 2 new tests; 79 total.
+- **Deliberation-layers reference (`docs/reference/deliberation-layers.md`).** The question
+  before the stack matrix: which of the ten decision layers (topology, control-flow authority,
+  model tiers, tool surface, knowledge/retrieval, state/memory, data contracts, guardrails,
+  budget/termination, observability/eval) a given problem actually contests. Each layer carries
+  its option spectrum, its decider, and the CHASSIS default seam; a scenario-family table maps
+  problem shapes to their contested layers. Designed to accrete rows/sections as new scenario
+  families come up.
+- **Researched option matrices for all ten deliberation layers** (ten parallel tech-researcher
+  briefs, 2025–2026 landscape + workspace production evidence, compressed into the house
+  matrix format in `docs/reference/stack-matrix.md`). Extended sections: Orchestration (new
+  Topology and Control-flow-authority tables + framework note), LLM provider (Model tier
+  strategy), Retrieval (upgrades table: rerankers, BM25+RRF, contextual/agentic retrieval,
+  text-to-SQL), Memory (persistence, extraction-memory, graph/temporal, durable-execution rows
+  + shared-state callout), Guardrails (moderation endpoints, classifier rails, judge-family
+  rule, per-tool-policy callout), LLM eval (promptfoo row, judge-bias and CI notes). New
+  sections: Budget & termination, Tool surface, Data contracts & structured output, Tracing &
+  observability. Every CHASSIS default survived the research pass; the additions are named
+  switch triggers, not new defaults.
+- **`/survey` skill — the mandatory first step on any assignment.**
+  `.claude/skills/survey/SKILL.md`: classifies a new assignment against the deliberation
+  layers' scenario table, then surveys the user via multiple-choice questions
+  (AskUserQuestion) covering only the contested layers plus the two irreversible couplings —
+  each option carrying Pros/Cons/Choose-when compressed from the stack matrix, with the
+  recommended option first and the firing trigger named when it isn't the default. Saves a
+  dated decision record (decisions, accepted defaults, profile sketch, watch-list of mid-build
+  triggers) to `docs/plans/` before any planning or code. Mandated in CLAUDE.md ("Survey first
+  — in all circumstances") and introduced in the README ("Step zero").
+- **Deliberation layer 11 — inference pipeline design.** How one query becomes one answer: the
+  stage decomposition inside a route, distinct from topology (which shapes the agent graph).
+  New section in `deliberation-layers.md` + a matrix in `stack-matrix.md`: single-prompt
+  synthesis (default, the shipped specialists), staged SoC pipeline (gather → transform →
+  curate → format, the PROVE QA pattern — out-of-band state, purpose-tagged calls, fallback
+  chains, code-assembled structure), plan-then-write, map-reduce over sources, best-of-N +
+  selection, and reflection — each with the failure mode that triggers it. Scenario table
+  gained an "evidence-backed answers" family and layer 11 on cross-document synthesis.
+
 - **Repo skeleton + frozen contracts.** Flat `lib/`/`app/`/`config/` layout; `lib/contracts.py` with all shared dataclasses (`Message`, `LLMResponse`, `Chunk`, `SearchResult`, `Turn`, `MemoryContext`, `Verdict`, `EvalRow`, `Answer`, `TraceEvent`) and Protocols (`LLM`, `Embedder`, `VectorStore`, `Retriever`, `Orchestrator`, `Memory`, `Guardrail`, `Evaluator`). Imports clean, `mypy` clean.
 - **Hygiene.** `pyproject.toml` (hatchling, ruff line-length 100, mypy, zero runtime deps), `.gitignore`, MIT `LICENSE`, `README.md`, `.env.example`.
 - **Core docs.** `docs/architecture.md` (flexibility mechanism, trace bus, query flow, the two couplings), `docs/extensibility.md` (add adapter/layer/profile, re-skin guide), `docs/stack-matrix.md` (per-layer pro/cons matrix).

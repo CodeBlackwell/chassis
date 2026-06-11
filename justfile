@@ -34,6 +34,11 @@ dev:
     -lsof -ti :8000 | xargs kill -9 2>/dev/null
     uv run --extra ui python -m app.ui
 
+# run the JSON API locally (FastAPI on :8001 — POST /ask, GET /trace, GET /health)
+api:
+    -lsof -ti :8001 | xargs kill -9 2>/dev/null
+    uv run --extra api python -m app.api
+
 # Ralph solo: one agent iterating a PRD bundle (prds/<slug>)
 ralph target iters="10":
     uv run python scripts/ralph.py {{target}} {{iters}}

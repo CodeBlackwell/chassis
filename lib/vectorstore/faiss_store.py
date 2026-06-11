@@ -1,5 +1,7 @@
 """FAISS adapter for the VectorStore contract. In-process, no service — IndexFlatIP
-over normalized vectors gives cosine ranking. Lazy import; append-only (flat index).
+over normalized vectors gives cosine ranking. Lazy import. Note: upsert appends (no
+dedup by id on a flat index); delete removes by position, keeping the parallel
+chunk list aligned because remove_ids compacts the index in order.
 """
 
 from collections.abc import Sequence
@@ -32,6 +34,19 @@ class FaissStore:
             self.ensure_collection(collection, len(vectors[0]))
         self._index[collection].add(np.asarray(vectors, dtype="float32"))
         self._chunks[collection].extend(chunks)
+
+    def delete(self, collection: str, ids: Sequence[str]) -> None:
+        import numpy as np
+
+        index = self._index.get(collection)
+        if index is None:
+            return
+        drop = set(ids)
+        positions = [i for i, c in enumerate(self._chunks[collection]) if c.id in drop]
+        if not positions:
+            return
+        index.remove_ids(np.asarray(positions, dtype="int64"))
+        self._chunks[collection] = [c for c in self._chunks[collection] if c.id not in drop]
 
     def search(self, collection: str, vector: list[float], k: int = 5) -> list[SearchResult]:
         import numpy as np
