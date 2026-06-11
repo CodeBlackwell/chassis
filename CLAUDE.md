@@ -4,7 +4,7 @@ Guidance for Claude Code working in this repo. This file is a **hub**: it points
 
 ## What CHASSIS is
 
-A contracts-first base repo for sophisticated multi-agent RAG projects. Not a single app — a base you re-skin per project. Every layer (LLM, embeddings, vector DB, retrieval, orchestration, memory, guardrails, eval, UI, deployment) sits behind a contract and is selected by config, not hard-wired.
+A contracts-first base repo for sophisticated multi-agent RAG projects. Not a single app — a base you re-skin per project. Every layer, from the model provider down to how answers are rendered and deployed, sits behind a contract and is selected by config, not hard-wired.
 
 The flexibility mechanism in one sentence: `lib/contracts.py` defines what each layer must do, the `lib/*/` adapters implement it, a registry picks one from config, and named profiles switch a whole backend with a single flag.
 
