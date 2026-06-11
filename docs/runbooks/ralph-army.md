@@ -68,7 +68,14 @@ tech-researcher ×N ─► matrix-author ─► default-skeptic ─► /prd ─�
 
 - **Pre:** fan out one `tech-researcher` per topic (vector DB, orchestration, inference, UI…);
   `matrix-author` compresses the briefs into `docs/reference/` tables; `default-skeptic` attacks
-  each proposed default and hardens the switch triggers. The hardened matrix feeds `/prd`.
+  each proposed default and hardens the switch triggers. The hardened matrix feeds `/prd`, and
+  **`prd-skeptic` reviews the bundle before `just army` fires** (ownership overlaps, oversized
+  agents, wave-order bugs, leaked completion tags — LAUNCH / FIX-FIRST verdict).
+- **During:** `adapter-builder` is the scoped template for any "add a backend" story (one
+  Protocol impl + one registry line + one profile key + tests, contracts untouchable);
+  `gate-verifier` absorbs noisy gate logs and returns verdict + minimal repro (and doubles as a
+  Ralph-style completion verifier on a progress file); `contract-guard` reviews any diff
+  against the seven engineering mandates, read-only.
 - **Post:** `delivery-auditor` verifies the *integrated whole* against the PRD (Ralph only
   verifies per-agent); its gap list seeds the next PRD. `readout-writer` (provisional) files the
   dated `docs/features/` readout and syncs CHANGELOG/ROADMAP — closing the loop.
