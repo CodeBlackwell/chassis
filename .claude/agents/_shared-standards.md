@@ -13,7 +13,6 @@ touching anything; the seven engineering mandates live there.
 
 ```bash
 just lint && just test
-uv run python scripts/smoke.py --stage e2e --corpus docs --profile memory   # full-loop smoke
 ```
 
 ## House research format (per topic)

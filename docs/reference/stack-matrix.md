@@ -27,7 +27,7 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 | all-MiniLM-L6-v2 (384-dim) | Tiny, fast, offline, great default | Lower retrieval quality than larger models | **Yes** | — |
 | bge-small-en-v1.5 (384-dim) | Better quality, **same dim as MiniLM (free swap)** | Larger download | No | Want more quality and download time is fine |
 | OpenAI text-embedding-3-small (1536-dim) | Strong quality, no local compute | Costs money; **different dim — see coupling** | No | No local compute available |
-| Hashing (feature-hash, any dim) | Zero deps, deterministic, no model/download | Lexical overlap only, no semantics | No | Tests / CI / offline smoke |
+| Hashing (feature-hash, any dim) | Zero deps, deterministic, no model/download | Lexical overlap only, no semantics | No | Tests / CI / offline |
 
 > Coupling: dim is frozen at ingest. MiniLM ↔ bge is a free swap (both 384). Switching to OpenAI (1536) after ingest requires a full re-ingest.
 
@@ -38,9 +38,30 @@ Each table: **Option | Pros | Cons | Default? | Switch trigger**.
 | Qdrant | Production-grade, real ANN, scales independently, the "prod" story | Needs a running service (docker-compose) | **Yes** | — |
 | Chroma (in-mem) | Zero services, runs in-process, trivial setup | Not the production story; memory-bound | No | Zero-service environment needed |
 | FAISS (pure lib) | No service, fast, battle-tested | Lowest-level; you manage persistence/metadata | No | Zero-service and you want raw control |
-| Memory (in-process) | Zero deps (no numpy), brute-force cosine | O(n) search, not persistent | No | Tests / CI / offline smoke |
+| Memory (in-process) | Zero deps (no numpy), brute-force cosine | O(n) search, not persistent | No | Tests / CI / offline |
 
 > Coupling: this choice drives deployment. Qdrant → docker-compose. Chroma/FAISS → single Dockerfile or bare process.
+
+## Ingestion — no contract, deliberately
+
+CHASSIS ships **no ingestion pipeline**. Loading and chunking are domain decisions — file
+formats, chunk boundaries, metadata, dedup all depend on the corpus — and a pre-built pipeline
+is the first thing every real project rips out. The seam is the contracts: produce `Chunk`s
+however fits your data, then `embedder.embed(texts)` → `store.upsert(collection, chunks,
+vectors)`. That's the whole interface.
+
+| Option | Pros | Cons | Default? | Switch trigger |
+|--------|------|------|----------|----------------|
+| Hand-rolled loader (walk folder → fixed-window chunks, ~20 lines) | Zero deps, full control, fits any corpus quirk | You write it; naive chunk boundaries | **Yes — write your own** | — |
+| LangChain / LlamaIndex loaders | Hundreds of formats and splitters out of the box | Heavy dependency for a loading step | No | Many formats needed right now |
+| Unstructured / Docling | Layout-aware PDF/Office parsing, tables survive | Heavy install, slower | No | Real PDFs/Office docs where layout matters |
+
+Best practices, regardless of loader:
+
+- **Start at ~800-char chunks with ~15% overlap**; tune against eval scores, not intuition.
+- **Stable chunk ids** (e.g. hash of source + offset) so re-ingest is idempotent.
+- **Carry provenance** — `Chunk.source` (and `meta`) is what makes citations possible later.
+- **Lock the embedder first** — dimension freezes when the collection is created (coupling #2).
 
 ## Retrieval — contract: `Retriever` (+ optional `GraphStore`)
 

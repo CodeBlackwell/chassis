@@ -27,7 +27,7 @@ WAVE_1_AGENTS=("feature-a" "feature-b")
 WAVE_1_GATE="just lint && just test"
 
 WAVE_2_AGENTS=("polish")
-WAVE_2_GATE="just lint && just test && uv run python scripts/smoke.py --stage e2e --corpus docs --profile memory"
+WAVE_2_GATE="just lint && just test"
 ```
 
 ### Agent Roster

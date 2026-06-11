@@ -1,6 +1,6 @@
 """Zero-dependency feature-hashing embedder. Hashes word tokens into a fixed-dim
 vector (the hashing trick), L2-normalized. Deterministic, no model download, no
-torch — for tests, CI, and offline smoke. Captures lexical overlap, not semantics,
+torch — for tests, CI, and offline use. Captures lexical overlap, not semantics,
 so use a real model (sbert/openai) for quality retrieval.
 """
 
@@ -10,11 +10,13 @@ import re
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+from config import defaults
+
 _TOKEN = re.compile(r"[a-z0-9]+")
 
 
 class HashingEmbedder:
-    def __init__(self, dim: int = 256) -> None:
+    def __init__(self, dim: int = defaults.HASHING_DIM) -> None:
         self._dim = dim
 
     @property

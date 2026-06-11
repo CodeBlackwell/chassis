@@ -9,6 +9,7 @@ optional (extractive fallback keeps the whole thing runnable offline).
 import time
 from typing import TYPE_CHECKING
 
+from config import defaults
 from lib.contracts import Answer, Turn
 
 from app.orchestration import router, specialists
@@ -27,7 +28,7 @@ class DefaultOrchestrator:
         *,
         llm: "LLM | None" = None,
         trace: "TraceBus | None" = None,
-        k: int = 5,
+        k: int = defaults.RETRIEVAL_K,
     ) -> None:
         self._retriever = retriever
         self._memory = memory

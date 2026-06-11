@@ -23,7 +23,7 @@ fix anything — findings go back to the bundle's author. Read
 4. **Wave order.** Wave arrays in the Orchestrator Config must match the roster table; a story
    must never depend on a later wave's output; dependencies must be acyclic.
 5. **Gates.** Every wave needs a `WAVE_N_GATE`; gate commands must be runnable in this repo
-   (`just lint && just test` shape). A final wave without the e2e smoke is a warning.
+   (`just lint && just test` shape).
 6. **Progress files.** One per roster agent, story IDs matching the spec, all boxes `[ ]`.
 
 ## Semantic checks

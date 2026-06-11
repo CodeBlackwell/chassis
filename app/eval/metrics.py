@@ -11,6 +11,8 @@ honest, explainable baseline.
 import re
 from collections.abc import Sequence
 
+from config import defaults
+
 _WORD = re.compile(r"[a-z0-9]+")
 
 
@@ -34,7 +36,7 @@ def answer_relevance(answer: str, question: str) -> float:
 
 
 def context_precision(
-    contexts: Sequence[str], ground_truth: str, min_overlap: float = 0.1
+    contexts: Sequence[str], ground_truth: str, min_overlap: float = defaults.CONTEXT_MIN_OVERLAP
 ) -> float:
     if not contexts:
         return 0.0

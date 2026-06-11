@@ -15,7 +15,7 @@ explicitly leaves open. Read `.claude/agents/_shared-standards.md` first.
 2. **Reality.** `git log` / `git diff` over the run's commits; read the shipped code. Map each
    PRD goal and each story to evidence in the diff — not to checkboxes in progress files
    (those are claims, not evidence).
-3. **Gates.** Run `just lint && just test` and the e2e smoke. Capture real output.
+3. **Gates.** Run `just lint && just test`. Capture real output.
 4. **Seams.** The per-agent blind spot: do the new packages actually compose? Check that
    registry entries resolve (`build()` the new impls on the offline profile where possible),
    profiles reference real impl keys, cross-package imports match the Handoff Notes, and

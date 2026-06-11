@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+from config import defaults
 from lib.contracts import EvalRow, Message
 
 from app.eval import metrics
@@ -49,7 +50,8 @@ class RagasEvaluator:
             f"Question: {row.question}\nAnswer: {row.answer or ''}\n"
             f"Context:\n{chr(10).join(row.contexts)}"
         )
-        return _parse_float(self._llm.chat([Message("user", prompt)], max_tokens=8).text)
+        judged = self._llm.chat([Message("user", prompt)], max_tokens=defaults.JUDGE_MAX_TOKENS)
+        return _parse_float(judged.text)
 
 
 def summary(rows: Sequence[EvalRow]) -> dict[str, float]:

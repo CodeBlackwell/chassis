@@ -15,15 +15,15 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from lib.contracts import TraceEvent
+from config import defaults
 
-_RING_MAX = 500
+from lib.contracts import TraceEvent
 
 
 class TraceBus:
-    def __init__(self, run_id: str, runs_dir: str = "runs") -> None:
+    def __init__(self, run_id: str, runs_dir: str = defaults.RUNS_DIR) -> None:
         self.run_id = run_id
-        self._ring: deque[TraceEvent] = deque(maxlen=_RING_MAX)
+        self._ring: deque[TraceEvent] = deque(maxlen=defaults.TRACE_RING_MAX)
         self._lock = threading.Lock()
         self.path = Path(runs_dir) / f"{run_id}.jsonl"
         self.path.parent.mkdir(parents=True, exist_ok=True)

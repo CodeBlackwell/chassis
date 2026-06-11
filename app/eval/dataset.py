@@ -1,19 +1,20 @@
-"""Corpus-agnostic seed-set generation: sample chunks from the freshly ingested
-corpus and turn each into a (question, ground_truth) EvalRow. With an LLM the
-system writes its own exam; without one, a degenerate fallback keeps it offline.
+"""Corpus-agnostic seed-set generation: turn chunks into (question, ground_truth)
+EvalRows. With an LLM the system writes its own exam; without one, a degenerate
+fallback keeps it offline. Producing the chunks is the project's loading decision
+(see docs/reference/stack-matrix.md, Ingestion).
 """
 
 from typing import TYPE_CHECKING
 
-from lib.contracts import EvalRow, Message
-from lib.ingestion.pipeline import load
+from config import defaults
+from lib.contracts import Chunk, EvalRow, Message
 
 if TYPE_CHECKING:
     from lib.contracts import LLM
 
 
 def _degenerate(text: str) -> tuple[str, str]:
-    return "What does this passage describe?", text[:200]
+    return "What does this passage describe?", text[: defaults.GROUND_TRUTH_CHARS]
 
 
 def _via_llm(llm: "LLM", text: str) -> tuple[str, str]:
@@ -29,12 +30,15 @@ def _via_llm(llm: "LLM", text: str) -> tuple[str, str]:
             question = stripped[2:].strip()
         elif stripped.lower().startswith("a:"):
             answer = stripped[2:].strip()
-    return (question or "What does this passage describe?"), (answer or text[:200])
+    truth = answer or text[: defaults.GROUND_TRUTH_CHARS]
+    return (question or "What does this passage describe?"), truth
 
 
-def generate(corpus: str, n: int = 10, llm: "LLM | None" = None) -> list[EvalRow]:
+def generate(
+    chunks: list[Chunk], n: int = defaults.EVAL_SEED_N, llm: "LLM | None" = None
+) -> list[EvalRow]:
     rows = []
-    for chunk in load(corpus)[:n]:
+    for chunk in chunks[:n]:
         question, ground_truth = _via_llm(llm, chunk.text) if llm else _degenerate(chunk.text)
         rows.append(EvalRow(question=question, ground_truth=ground_truth))
     return rows

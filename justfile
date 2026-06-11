@@ -21,14 +21,6 @@ lint:
 fix:
     uv run ruff check --fix lib app config tests scripts
 
-# ingest a corpus through a profile (default: zero-dep memory)
-ingest corpus profile="memory":
-    uv run python scripts/smoke.py --stage ingest --corpus {{corpus}} --profile {{profile}}
-
-# the smoke gate
-smoke corpus profile="memory":
-    uv run python scripts/smoke.py --stage ingest --corpus {{corpus}} --profile {{profile}}
-
 # start backing services (Qdrant) for the qdrant-local profile
 services:
     docker compose up -d

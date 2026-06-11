@@ -23,7 +23,6 @@ lib/
   llm/              adapters: openai, anthropic, ollama         [deferred]
   embeddings/       adapters: sbert (minilm/bge), openai        [deferred]
   vectorstore/      adapters: qdrant, chroma, faiss             [deferred]
-  ingestion/        corpus-agnostic load -> chunk -> embed      [deferred]
 app/
   orchestration/    router + specialists + orchestrator loop    [deferred]
   memory/           short-term buffer + long-term recall        [deferred]
@@ -32,8 +31,13 @@ app/
   ui/               dashboard, tabs read the trace bus          [deferred]
 config/
   settings.py       env-driven config; resolves impls           [deferred]
+  defaults.py       centralized tuning knobs (k, windows, ports) [present]
   profiles/         named stack presets                          [deferred]
 ```
+
+There is deliberately no ingestion package. Loading and chunking are per-project decisions
+(see [stack-matrix.md](../reference/stack-matrix.md), Ingestion); the seam is the contracts —
+produce `Chunk`s, `embedder.embed`, `store.upsert`.
 
 ## The trace bus
 

@@ -5,6 +5,8 @@ are pure and unit-tested offline."""
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
+from config import defaults
+
 from lib.contracts import LLMResponse, Message
 
 
@@ -46,8 +48,8 @@ class AnthropicLLM:
         self,
         messages: Sequence[Message],
         *,
-        temperature: float = 0.0,
-        max_tokens: int = 1024,
+        temperature: float = defaults.LLM_TEMPERATURE,
+        max_tokens: int = defaults.LLM_MAX_TOKENS,
     ) -> LLMResponse:
         system, convo = _split_system(messages)
         kwargs: dict[str, Any] = {

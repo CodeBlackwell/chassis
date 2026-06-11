@@ -10,7 +10,7 @@ The flexibility mechanism in one sentence: `lib/contracts.py` defines what each 
 
 ## Status
 
-Built and verified offline (66 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `ingestion` + `SimpleRetriever`; the full ingest + e2e smoke gates; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`); and the Ralph army build harness (`scripts/ralph.py` + `prds/` bundles + the `/prd` skill — see [docs/runbooks/ralph-army.md](docs/runbooks/ralph-army.md)). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place). See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
+Built and verified offline (62 tests, mypy + ruff clean): frozen contracts; the Wave 0 core (`registry`, `settings` + profiles, `trace` bus); all adapters (LLM trio, sbert/openai/hashing embedders, qdrant/chroma/faiss/memory stores); `SimpleRetriever`; docker/justfile; the Wave 1 layers `memory`, `orchestration`, `eval` (each a working default) plus `guardrails` as an intentional unopinionated stub (`PassthroughGuardrail` — the seam is wired, the policy is left to each project); the Wave 2 Gradio dashboard (`app/ui`, `python -m app.ui`); and the Ralph army build harness (`scripts/ralph.py` + `prds/` bundles + the `/prd` skill — see [docs/runbooks/ralph-army.md](docs/runbooks/ralph-army.md)). Still deferred: the knowledge-graph adapter (`GraphStore`/`HybridRetriever` — contract in place). Deliberately not shipped: an ingestion pipeline — loading/chunking is per-project; the seam is `Chunk` → `Embedder` → `VectorStore.upsert`, and the stack matrix's Ingestion section carries the options. See [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
 
 The whole system runs with **zero keys/services/deps** via the `memory` profile; swap to the real stack by changing one profile flag.
 
@@ -19,9 +19,9 @@ The whole system runs with **zero keys/services/deps** via the `memory` profile;
 Flat, multi-package layout — `lib/`, `app/`, `config/` are top-level importable packages (no `src/`, no top-level `chassis` package). This is dictated by the frozen import paths in the contracts (`lib.contracts`, `lib.llm.openai_llm`, `app.orchestration`).
 
 ```
-lib/     shared infra — contracts, registry, trace bus, adapters, ingestion
+lib/     shared infra — contracts, registry, trace bus, adapters
 app/     domain layers — orchestration, memory, guardrails, eval, ui
-config/  env-driven settings + named stack profiles
+config/  env-driven settings + named stack profiles + defaults.py (centralized tuning knobs)
 docs/    categorical subdirs — architecture/, guides/, reference/, plans/, features/, runbooks/
 prds/    Ralph build-harness bundles (PRD + agents/ + progress/ per feature); _example/ is the template
 ```
@@ -34,10 +34,8 @@ Tooling mirrors the workspace house style (uv + hatchling). The `justfile` carri
 just setup                           # uv sync (dev group: ruff, mypy, pytest)
 just test                            # pytest
 just lint                            # ruff + mypy (must stay clean)
-just ingest <folder>                 # ingest a corpus (default: memory profile)
 just dev                             # launch the dashboard on :8000 (--extra ui)
 just ralph prds/<slug>               # Ralph solo build loop (just army … for gated waves)
-uv run python scripts/smoke.py --stage e2e --corpus <folder> --profile memory
 ```
 
 Adapter deps are `[project.optional-dependencies]` groups — `uv sync` installs the light base; add `--extra ui` / `--extra embeddings-sbert` etc. for a real stack.
@@ -66,6 +64,7 @@ To extend without touching contracts, see [docs/guides/extensibility.md](docs/gu
 5. **Dataclasses, not Pydantic, in contracts** — Pydantic is allowed inside guardrails for schema validation but never leaks into `lib/contracts.py`.
 6. **Path ownership** — a layer edits only its own package plus its one-line registry entry.
 7. **YAGNI** — default to the lowest-friction option that demonstrates the concept; switch only on a named trigger.
+8. **Tuning knobs live in `config/defaults.py`** — no scattered magic ints/strings; each knob's inline comment cites the consuming module(s) (paths, not line numbers). Adding or moving a usage means updating the citation.
 
 ## Key docs
 

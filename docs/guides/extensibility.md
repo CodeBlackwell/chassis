@@ -47,7 +47,7 @@ Say you want a new vector store, `LanceDB`. Three edits, no other file touched.
    vectorstore: {impl: lance, uri: "./data/lance"}
    ```
 
-Done. The orchestrator, ingestion, retriever, and UI never learn the name "Lance" — they only ever see the `VectorStore` contract. The same recipe adds an LLM provider (`lib/llm/`), an embedder (`lib/embeddings/`), or any other layer.
+Done. The orchestrator, retriever, and UI never learn the name "Lance" — they only ever see the `VectorStore` contract. The same recipe adds an LLM provider (`lib/llm/`), an embedder (`lib/embeddings/`), or any other layer.
 
 ## Move 2 — Add a whole new layer
 
@@ -72,10 +72,9 @@ A profile is a named stack — the fastest way to flip an entire backend.
 llm:          {impl: anthropic, model: claude-sonnet-4-6}
 embedder:     {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
 vectorstore:  {impl: chroma}          # in-process, no service
-ingestion:    {chunk_size: 800, overlap: 120}
 retriever:    {impl: simple}
 memory:       {impl: buffer, window: 8, recall_k: 3}
-guardrail:    {impl: default, block_pii: true, min_overlap: 0.3}
+guardrail:    {impl: passthrough}   # unopinionated stub; implement per project
 orchestrator: {impl: default, k: 5}
 evaluator:    {impl: ragas}
 ```
@@ -95,9 +94,9 @@ The whole point: a new domain reuses the base and writes only what is genuinely 
 Checklist:
 
 1. **Pick a profile** (or write one) for the target environment — keys available, compute available, services allowed.
-2. **Point ingestion at the corpus.** Ingestion takes a folder path at runtime; the domain is never baked in. Drop the project's documents in and ingest.
+2. **Write the project's loader.** CHASSIS ships no ingestion pipeline — produce `Chunk`s from the corpus however fits the domain (see [stack-matrix.md](../reference/stack-matrix.md), Ingestion), then `embedder.embed` → `store.upsert` through the contracts.
 3. **Implement domain specialists** in `app/orchestration/` against the `Retriever`, `Memory`, and `Guardrail` contracts. This is usually the only real code a new project writes.
-4. **Tune, don't rebuild.** Adjust `chunk_size`, `k`, `window`, the router's classes, and the guardrail heuristics in config and small overrides.
+4. **Tune, don't rebuild.** Per-stack knobs live in the profile (`k`, `window`, `recall_k`); the code-level defaults behind them — and the rest of the tunable ints/strings (LLM token budgets, collection names, eval thresholds, ports) — are centralized in `config/defaults.py`.
 5. **Reuse everything else** — trace bus, registry, eval harness, UI tabs, deployment — unchanged.
 
 If a new project finds itself editing `lib/`, that is a signal to add an adapter (Move 1) or a layer (Move 2), not to fork the base.

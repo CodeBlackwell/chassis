@@ -92,9 +92,11 @@ def test_runner_fills_rows_and_reports():
     assert "faithfulness" in text
 
 
-def test_dataset_generate_offline(tmp_path):
-    (tmp_path / "a.md").write_text("CHASSIS is a contracts-first multi-agent RAG base repo.")
-    (tmp_path / "b.txt").write_text("Profiles select the whole stack by config.")
-    rows = generate(str(tmp_path), n=10)
+def test_dataset_generate_offline():
+    chunks = [
+        Chunk(id="a", text="CHASSIS is a contracts-first multi-agent RAG base.", source="a.md"),
+        Chunk(id="b", text="Profiles select the whole stack by config.", source="b.txt"),
+    ]
+    rows = generate(chunks, n=10)
     assert len(rows) == 2
     assert all(r.question and r.ground_truth for r in rows)

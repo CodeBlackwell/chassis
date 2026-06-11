@@ -18,22 +18,21 @@ The boilerplate's load-bearing core. Everything else codes against it.
   - `[project.optional-dependencies]` groups per adapter; mypy + ruff clean. Real round-trips deferred (need keys/models).
   - `lib/vectorstore/` — `MemoryStore` (zero-dep) + `FaissStore` + `ChromaStore` + `QdrantStore`. `VectorStore` contract.
   - `lib/embeddings/hashing.py` — `HashingEmbedder` (zero-dep, lexical). `lib/retriever.py` — `SimpleRetriever`.
-  - `lib/ingestion/pipeline.py` — `load()` + `ingest()` (.md/.txt/.pdf, trace-emitting).
-  - `scripts/smoke.py --stage ingest` + `config/profiles/memory.yaml`: **real e2e ingest passes offline, zero deps**. 35 tests total.
+  - `config/profiles/memory.yaml`: **the whole stack runs offline, zero deps**.
   - `Dockerfile` (uv, non-root, `EXTRAS` arg) + `.dockerignore` + `docker-compose.yml` (Qdrant+app) + `docker-compose.prod.yml` (internal net + Caddy) + `Caddyfile`; both compose files validate.
-  - `justfile` (house recipes); `just --list` + `just ingest` run. App-server CMD (`app.ui`) activates with Wave 2.
+  - `justfile` (house recipes). App-server CMD (`app.ui`) activates with Wave 2.
 - **Needed:**
-  - `smoke.py --stage e2e` (needs orchestration); `tests/conftest.py` (SDK-boundary mocks).
+  - `tests/conftest.py` (SDK-boundary mocks).
 - **Notes:** logger + no-silent-failures mandate is cross-cutting (recon §2), subordinate to the trace bus.
 
 ## Wave 1 — Domain layers (parallelizable, one owner each)
 
 Each owns one `app/*` package and codes against the frozen contracts.
 
-- **Orchestration** (`app/orchestration/`) — DONE. `router` + `specialists` (LLM or extractive) + `DefaultOrchestrator` (input rail → route → memory → specialist → output rail → `Answer`, emits trace). `smoke --stage e2e` runs offline. 6 tests. Contract: `Orchestrator`.
+- **Orchestration** (`app/orchestration/`) — DONE. `router` + `specialists` (LLM or extractive) + `DefaultOrchestrator` (input rail → route → memory → specialist → output rail → `Answer`, emits trace). Runs offline. 6 tests. Contract: `Orchestrator`.
 - **Memory** (`app/memory/`) — DONE. `BufferMemory` — deque window + long-term vector recall (evicted turns stay findable) + summarize-on-overflow (LLM optional). 6 offline tests. Contract: `Memory`.
 - **Guardrails** (`app/guardrails/`) — STUB BY DESIGN. `PassthroughGuardrail` satisfies the `Guardrail` contract and is wired through the orchestrator's block seam, but enforces nothing — what counts as injection/PII/ungrounded is domain-specific, so the base ships the seam, not a policy. A project registers its own rail under `guardrail` and selects it in a profile; the orchestrator already honors a blocking verdict, so a real rail drops in with no other change. Contract: `Guardrail` (recon §1). 2 offline tests + an orchestration test that the block seam fires.
-- **Eval** (`app/eval/`) — DONE. `metrics` (faithfulness/answer-relevance/context-precision) + `RagasEvaluator` (+ optional judge, summary, CSV) + `runner` + `dataset`/`make_eval_set.py` (corpus-agnostic goldens). 8 tests. Contract: `Evaluator` (recon §6).
+- **Eval** (`app/eval/`) — DONE. `metrics` (faithfulness/answer-relevance/context-precision) + `RagasEvaluator` (+ optional judge, summary, CSV) + `runner` + `dataset` (goldens from chunks — corpus-agnostic). 8 tests. Contract: `Evaluator` (recon §6).
 
 **Wave 1 complete.** All four domain layers built, tested offline, contract-conformant.
 
@@ -45,7 +44,7 @@ Each owns one `app/*` package and codes against the frozen contracts.
 
 ## Options (off by default; build on a trigger)
 
-- **Knowledge-graph retrieval** — contract done: `GraphNode`/`GraphEdge`/`GraphStore` added to `lib/contracts.py` and re-frozen. Remaining: a `GraphStore` adapter (default SQLite + NetworkX; Neo4j heavy option) + a `HybridRetriever` implementing `Retriever`, plus an `ingestion` step that emits nodes/edges and a `graphstore` registry slot + profile flag `retriever: vector|hybrid` (recon §8; stack-matrix Retrieval row).
+- **Knowledge-graph retrieval** — contract done: `GraphNode`/`GraphEdge`/`GraphStore` added to `lib/contracts.py` and re-frozen. Remaining: a `GraphStore` adapter (default SQLite + NetworkX; Neo4j heavy option) + a `HybridRetriever` implementing `Retriever`, plus a load-time graph-extraction step that emits nodes/edges and a `graphstore` registry slot + profile flag `retriever: vector|hybrid` (recon §8; stack-matrix Retrieval row).
 - **RAGAS library** eval, **Guardrails AI / NeMo**, **LangGraph / CrewAI** orchestration, **Redis** memory — each a registry/profile swap with a named trigger (stack-matrix).
 - **Figma workflow** — process, not code: `tokens.json` stays source of truth; use the figma skills to mirror tokens / push UI mockups (recon §11).
 
@@ -58,4 +57,4 @@ Each owns one `app/*` package and codes against the frozen contracts.
 
 ## Deliberately out of scope (YAGNI ledger)
 
-Redis-persisted circuit breakers / persona scalers / numeric risk scores; multi-tenant graph scoping; 12-directory docs taxonomy; token build fan-out; Figma↔code auto-sync; an all-D3 dashboard; all eight themes ported; async anywhere. Each has a trigger recorded in the recon plan that would justify revisiting it.
+A pre-built ingestion pipeline (loading/chunking is per-project; the stack-matrix Ingestion section carries the options — the seam is `Chunk` → `Embedder` → `VectorStore.upsert`); Redis-persisted circuit breakers / persona scalers / numeric risk scores; multi-tenant graph scoping; 12-directory docs taxonomy; token build fan-out; Figma↔code auto-sync; an all-D3 dashboard; all eight themes ported; async anywhere. Each has a trigger recorded in the recon plan that would justify revisiting it.

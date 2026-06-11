@@ -7,6 +7,8 @@ import urllib.request
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
+from config import defaults
+
 from lib.contracts import LLMResponse, Message
 
 
@@ -25,15 +27,15 @@ class OllamaLLM:
     def __init__(self, model: str, host: str | None = None) -> None:
         self.model = model
         if host is None:
-            host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+            host = os.getenv("OLLAMA_HOST", defaults.OLLAMA_HOST)
         self.host = host.rstrip("/")
 
     def chat(
         self,
         messages: Sequence[Message],
         *,
-        temperature: float = 0.0,
-        max_tokens: int = 1024,
+        temperature: float = defaults.LLM_TEMPERATURE,
+        max_tokens: int = defaults.LLM_MAX_TOKENS,
     ) -> LLMResponse:
         body = json.dumps(_payload(self.model, messages, temperature, max_tokens)).encode()
         req = urllib.request.Request(

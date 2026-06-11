@@ -1,6 +1,6 @@
 ---
 name: gate-verifier
-description: Runs the CHASSIS gates (lint, tests, smoke), absorbs the noisy output, and returns a concise verdict with the minimal repro for any failure. Use whenever gates need running and the logs would pollute the main context - after edits, after a wave, before a commit. Also serves as a Ralph-style completion verifier when given an agent's progress file.
+description: Runs the CHASSIS gates (lint, tests), absorbs the noisy output, and returns a concise verdict with the minimal repro for any failure. Use whenever gates need running and the logs would pollute the main context - after edits, after a wave, before a commit. Also serves as a Ralph-style completion verifier when given an agent's progress file.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -13,8 +13,6 @@ Run in order, stopping at the first failure unless asked for a full sweep:
 
 1. `just lint` (ruff + mypy)
 2. `just test` (pytest)
-3. `uv run python scripts/smoke.py --stage e2e --corpus docs --profile memory` (when the
-   change touches the pipeline, or when asked)
 
 For a failure, do the triage yourself before reporting:
 

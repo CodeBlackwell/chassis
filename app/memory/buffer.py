@@ -10,6 +10,7 @@ Without an LLM the summary is a plain running transcript, so it works offline.
 from collections import deque
 from typing import TYPE_CHECKING
 
+from config import defaults
 from lib.contracts import Chunk, MemoryContext, Message, Turn
 
 if TYPE_CHECKING:
@@ -22,9 +23,9 @@ class BufferMemory:
         embedder: "Embedder",
         store: "VectorStore",
         *,
-        window: int = 8,
-        recall_k: int = 3,
-        collection: str = "memory",
+        window: int = defaults.MEMORY_WINDOW,
+        recall_k: int = defaults.MEMORY_RECALL_K,
+        collection: str = defaults.MEMORY_COLLECTION,
         llm: "LLM | None" = None,
     ) -> None:
         self._embedder = embedder
@@ -66,7 +67,8 @@ class BufferMemory:
             "Update the running summary with the new turn; return only the summary.\n\n"
             f"Summary:\n{prior or '(empty)'}\n\nNew turn — {snippet}"
         )
-        return self._llm.chat([Message("user", prompt)], max_tokens=200).text
+        msg = [Message("user", prompt)]
+        return self._llm.chat(msg, max_tokens=defaults.SUMMARY_MAX_TOKENS).text
 
 
 if TYPE_CHECKING:

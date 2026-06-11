@@ -5,6 +5,7 @@ extractive answer (top chunk / joined snippets), so the pipeline runs offline.
 
 from typing import TYPE_CHECKING
 
+from config import defaults
 from lib.contracts import Answer, Message
 
 if TYPE_CHECKING:
@@ -34,7 +35,11 @@ def _synthesize(llm: "LLM", query: str, contexts: list[str]) -> str:
 
 
 def answer_retrieval(
-    query: str, retriever: "Retriever", llm: "LLM | None", trace: "TraceBus | None", k: int = 5
+    query: str,
+    retriever: "Retriever",
+    llm: "LLM | None",
+    trace: "TraceBus | None",
+    k: int = defaults.RETRIEVAL_K,
 ) -> Answer:
     hits, contexts, citations = _gather(query, retriever, k, trace)
     if not hits:
@@ -44,12 +49,23 @@ def answer_retrieval(
 
 
 def answer_synthesis(
-    query: str, retriever: "Retriever", llm: "LLM | None", trace: "TraceBus | None", k: int = 5
+    query: str,
+    retriever: "Retriever",
+    llm: "LLM | None",
+    trace: "TraceBus | None",
+    k: int = defaults.RETRIEVAL_K,
 ) -> Answer:
     hits, contexts, citations = _gather(query, retriever, k, trace)
     if not hits:
         return Answer(text=_NO_INFO, route="synthesis")
-    text = _synthesize(llm, query, contexts) if llm else " … ".join(c[:200] for c in contexts[:3])
+    text = (
+        _synthesize(llm, query, contexts)
+        if llm
+        else " … ".join(
+            c[: defaults.EXTRACTIVE_SNIPPET_CHARS]
+            for c in contexts[: defaults.EXTRACTIVE_MAX_SNIPPETS]
+        )
+    )
     return Answer(text=text, route="synthesis", citations=citations, contexts=contexts)
 
 

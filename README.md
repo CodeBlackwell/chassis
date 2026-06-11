@@ -21,17 +21,18 @@ contracts (frozen Protocols)  ──implemented by──►  adapters (lib/*, ap
 
 ## Try it in sixty seconds — no keys, no services, no heavy deps
 
-The `memory` profile runs the entire loop (ingest → route → retrieve → answer → trace → eval)
-in-process with zero external dependencies:
+The `memory` profile runs the entire loop (route → retrieve → answer → trace → eval) in-process
+with zero external dependencies:
 
 ```bash
 just setup
-just ingest docs                # or any folder of .md/.txt/.pdf
 CHASSIS_PROFILE=memory just dev # four-tab dashboard on :8000
 ```
 
-Then point it at a real stack by changing one word — `--profile qdrant-local` — or pivot a single
-layer live: `CHASSIS_VECTORSTORE_IMPL=chroma`.
+Loading documents is yours by design — CHASSIS deliberately ships **no ingestion pipeline**
+(step 1 of the walkthrough shows the three-call seam any loader plugs into). Then point the
+stack at a real backend by changing one word — `CHASSIS_PROFILE=qdrant-local` — or pivot a
+single layer live: `CHASSIS_VECTORSTORE_IMPL=chroma`.
 
 ## The stack is a config file
 
@@ -58,26 +59,38 @@ vectorstore: {impl: memory}            vectorstore: {impl: qdrant}
 
 Defaults are deliberate: the lowest-friction option that still demonstrates the concept, with the
 production option one flag away. The per-layer trade-offs and the trigger that justifies each
-switch live in [the stack matrix](docs/reference/stack-matrix.md).
+switch live in [the stack matrix](docs/reference/stack-matrix.md). The same principle covers the
+numbers: every tunable int/string (retrieval `k`, memory window, token budgets, eval thresholds,
+ports) lives centralized in `config/defaults.py`, with profiles overriding per stack.
 
 ## Walkthrough — from a folder of documents to a deployed assistant
 
 The shape CHASSIS is optimized for: **an assistant over a private corpus** — a team handbook,
 product docs, a contract archive, a research pile. The domain changes; the sequence doesn't.
 
-**1 — Drop in the corpus.** Any folder of `.md` / `.txt` / `.pdf`. The domain is never baked in:
+**1 — Load the corpus, your way.** CHASSIS deliberately ships **no ingestion pipeline**.
+Loading and chunking are domain decisions — formats, chunk boundaries, metadata all depend on
+the corpus — and a pre-built loader is the first thing a real project rips out. What the base
+ships is the seam, three contract calls that any loader plugs into, from a ten-line folder
+walker to a layout-aware Docling pipeline:
 
-```bash
-just ingest corpora/handbook            # chunk → embed → upsert, zero-dep profile
+```python
+from config.settings import Settings
+
+settings = Settings.load("memory")
+embedder, store = settings.build("embedder"), settings.build("vectorstore")
+
+chunks = my_loader("corpora/handbook")   # your code: yield Chunk(id, text, source)
+store.ensure_collection("chassis", embedder.dim)
+store.upsert("chassis", chunks, embedder.embed([c.text for c in chunks]))
 ```
 
 > **Behind the scenes:** `Settings.load("memory")` reads the profile YAML and the registry
-> lazy-imports the implementations it names — `HashingEmbedder`, `MemoryStore` — nothing else
-> is even imported. `lib/ingestion/pipeline.py` walks the folder, splits documents into
-> ~800-char chunks with 120 overlap, embeds each one, creates the collection at the embedder's
-> dimension, and upserts vectors + chunk metadata. **This is the moment coupling #2 engages:**
-> the collection's dimension is now fixed to this embedder family. Each stage emits a
-> `TraceEvent`, so even ingestion leaves an audit trail.
+> lazy-imports only the implementations it names — `HashingEmbedder`, `MemoryStore` — nothing
+> else is even imported. **This is the moment coupling #2 engages:** the collection's dimension
+> is now fixed to this embedder family. Loader options (LangChain/LlamaIndex, Unstructured,
+> Docling, hand-rolled) and chunking best practices live in the
+> [stack matrix](docs/reference/stack-matrix.md)'s Ingestion section.
 
 **2 — Talk to it, and watch it think.**
 
@@ -96,12 +109,14 @@ routing, recall, retrieval, or synthesis — instead of leaving you to guess.
 > and embedded into its own vector collection so a fact from turn 1 is still findable at
 > turn 40, after the window has long evicted it.
 
-**3 — Put a number on it before upgrading anything.** Generate a gold set you can review and
-edit, then run the **Eval** tab against the corpus for baseline faithfulness / answer-relevance
-/ context-precision scores:
+**3 — Put a number on it before upgrading anything.** Generate a gold set from your chunks and
+score a baseline:
 
-```bash
-uv run python scripts/make_eval_set.py --corpus corpora/handbook --n 20
+```python
+from app.eval.dataset import generate
+from app.eval.runner import answer_rows
+
+rows = evaluator.run(answer_rows(orchestrator, generate(chunks, n=20)))
 ```
 
 This baseline is the point of the step: every upgrade after it is measured, not vibes.
@@ -112,7 +127,8 @@ This baseline is the point of the step: every upgrade after it is measured, not 
 > uses — not a separate code path — and `RagasEvaluator` scores each answer for lexical
 > faithfulness (is it grounded in the retrieved context?), answer relevance, and context
 > precision, each in `[0,1]`. The scores are honest about their nature: cheap lexical proxies
-> by default, an LLM-judge column when a model is available.
+> by default, an LLM-judge column when a model is available. Wire this loop into
+> `build_app(eval_fn=...)` and the dashboard's **Eval** tab runs it on demand.
 
 **4 — Decide the two couplings, then graduate the stack.** Lock the embedder (dimension freezes
 at ingest) and pick the vector DB (it drives deployment) — then the upgrade is install + flag:
@@ -120,7 +136,7 @@ at ingest) and pick the vector DB (it drives deployment) — then the upgrade is
 ```bash
 uv sync --extra embeddings-sbert --extra vectorstore-qdrant --extra llm-anthropic
 just services                            # Qdrant container
-just ingest corpora/handbook qdrant-local
+# re-run your loader under the new profile — a fresh 384-dim collection
 CHASSIS_PROFILE=qdrant-local just dev
 ```
 
@@ -173,10 +189,9 @@ reading the same trace bus, themed via a single `tokens.json`.
 
 ## Judge it, don't vibe it
 
-`app/eval/` generates a gold set from any corpus, runs the questions through the orchestrator,
+`app/eval/` generates a gold set from your chunks, runs the questions through the orchestrator,
 and scores faithfulness / answer-relevance / context-precision — offline by default, with an
-LLM-as-judge column when a model is available. `scripts/make_eval_set.py` makes the exam
-corpus-agnostic.
+LLM-as-judge column when a model is available.
 
 ## Two couplings you can't config away
 
@@ -208,7 +223,7 @@ after. See the [runbook](docs/runbooks/ralph-army.md).
 
 ## Status
 
-Built and verified offline: 66 tests, `mypy` + `ruff` clean on the zero-dep profile.
+Built and verified offline: 62 tests, `mypy` + `ruff` clean on the zero-dep profile.
 Real-backend round-trips (cloud keys, Qdrant service) and the knowledge-graph retriever are the
 open edges — the contracts for both are already frozen.
 

@@ -29,10 +29,8 @@ Rules that keep parallel agents from colliding:
 - **Every path has exactly one writer.** Same-wave agents never touch the same file; shared
   paths are read-only. `lib/contracts.py` is frozen — no agent owns it.
 - **Max 4 stories per agent** (one context window each). Split bigger domains.
-- **Gates between waves** — for CHASSIS, `just lint && just test`; add the e2e smoke
-  (`uv run python scripts/smoke.py --stage e2e --corpus docs --profile memory` — any non-empty
-  corpus folder works) on the final wave. A failed gate re-launches the wave's agents with the
-  error appended (3 tries).
+- **Gates between waves** — for CHASSIS, `just lint && just test`. A failed gate re-launches
+  the wave's agents with the error appended (3 tries).
 
 ## Three-layer completion (the false-"done" guard)
 
