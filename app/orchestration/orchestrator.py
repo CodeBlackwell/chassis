@@ -7,16 +7,19 @@ optional (extractive fallback keeps the whole thing runnable offline).
 """
 
 import time
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from config import defaults
 from lib.contracts import Answer, Turn
 
-from app.orchestration import router, specialists
+from app.orchestration import specialists
+from app.orchestration.router import KeywordRouter
 
 if TYPE_CHECKING:
-    from lib.contracts import LLM, Guardrail, Memory, Retriever
-    from lib.trace import TraceBus
+    from lib.contracts import LLM, Guardrail, Memory, Retriever, Router, Tracer
+
+    from app.orchestration.specialists import SpecialistFn
 
 
 class DefaultOrchestrator:
@@ -27,8 +30,10 @@ class DefaultOrchestrator:
         guardrail: "Guardrail",
         *,
         llm: "LLM | None" = None,
-        trace: "TraceBus | None" = None,
+        trace: "Tracer | None" = None,
         k: int = defaults.RETRIEVAL_K,
+        router: "Router | None" = None,
+        specialists_map: "Mapping[str, SpecialistFn] | None" = None,
     ) -> None:
         self._retriever = retriever
         self._memory = memory
@@ -36,6 +41,8 @@ class DefaultOrchestrator:
         self._llm = llm
         self._trace = trace
         self._k = k
+        self._router = router or KeywordRouter()
+        self._specialists = specialists_map or specialists.SPECIALISTS
 
     def _emit(self, component: str, event: str, **payload: object) -> None:
         if self._trace:
@@ -49,21 +56,18 @@ class DefaultOrchestrator:
             self._emit("orchestrator", "answer", route="blocked")
             return Answer(text="Request blocked by the input guardrail.", route="blocked")
 
-        chosen = router.route(query)
+        chosen = self._router.route(query)
         self._emit("router", "route_decision", route=chosen)
         ctx = self._memory.context(query)
         self._emit("memory", "memory_recall", recent=len(ctx.recent), recalled=len(ctx.recalled))
 
-        if chosen == "chitchat":
-            answer = specialists.answer_chitchat(query, self._llm)
-        elif chosen == "synthesis":
-            answer = specialists.answer_synthesis(
-                query, self._retriever, self._llm, self._trace, self._k
+        if chosen not in self._specialists:
+            raise KeyError(
+                f"router returned route {chosen!r} but no specialist is registered for it"
             )
-        else:
-            answer = specialists.answer_retrieval(
-                query, self._retriever, self._llm, self._trace, self._k
-            )
+        answer = self._specialists[chosen](
+            query, retriever=self._retriever, llm=self._llm, trace=self._trace, k=self._k
+        )
 
         verdict_out = self._guardrail.check_output(answer.text, answer.contexts)
         self._emit("guardrail.output", "guardrail_verdict", passed=verdict_out.passed,
@@ -71,6 +75,14 @@ class DefaultOrchestrator:
         if not verdict_out.passed:
             answer = Answer(
                 text="Response withheld by the output guardrail.",
+                route=answer.route,
+                citations=answer.citations,
+                contexts=answer.contexts,
+            )
+        elif verdict_out.revised is not None:
+            # pass-with-modification: the rail redacted/rewrote the text
+            answer = Answer(
+                text=verdict_out.revised,
                 route=answer.route,
                 citations=answer.citations,
                 contexts=answer.contexts,

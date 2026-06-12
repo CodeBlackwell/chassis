@@ -1,6 +1,8 @@
 llm:          {impl: anthropic, model: claude-sonnet-4-6}
+# llm_fast:   {impl: anthropic, model: claude-haiku-4-5}   # optional second tier (judge/summary); falls back to llm
 embedder:     {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
 vectorstore:  {impl: qdrant}   # url from QDRANT_URL env (defaults to localhost:6333)
+router:       {impl: keyword}
 retriever:    {impl: simple}
 memory:       {impl: buffer, window: 8, recall_k: 3}
 guardrail:    {impl: passthrough}   # unopinionated stub; implement per project

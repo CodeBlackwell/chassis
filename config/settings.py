@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 _PROFILES = Path(__file__).parent / "profiles"
 _OVERRIDABLE = (
-    "llm", "embedder", "vectorstore", "graphstore",
+    "llm", "llm_fast", "embedder", "vectorstore", "graphstore", "router",
     "retriever", "memory", "guardrail", "orchestrator", "evaluator",
 )
 
@@ -34,6 +34,8 @@ class Settings:
         # that profile YAML can't express
         from lib.registry import build
 
+        if self.layers[layer].get("impl") in (None, "none"):
+            return None  # `impl: none` — the layer is deliberately absent (e.g. no-LLM profile)
         return build(layer, self.impl(layer), **{**self.config(layer), **extra})
 
     @classmethod

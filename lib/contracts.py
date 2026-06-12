@@ -6,13 +6,15 @@ layer is built: adapters and app layers code against them and never propose chan
 mid-build. If an implementation thinks a contract is wrong, it logs the complaint and
 works around it — contract churn is how parallel builds die.
 
-Three deliberate between-build extensions (extensibility Move 2) have been made:
-the knowledge-graph option (GraphNode / GraphEdge / GraphStore, 2026-06-09);
-tool-calling (ToolSpec / ToolCall, additive fields on Message / LLMResponse, and a
-`tools=` kwarg on LLM.chat — all defaulted, so existing adapters and callers are
-untouched); and VectorStore.delete for corpus freshness (removed source documents
-were previously unremovable; both 2026-06-11). Contracts are re-frozen as of these;
-no further changes in flight.
+Deliberate between-build extensions (extensibility Move 2) made to date:
+the knowledge-graph option (GraphNode / GraphEdge / GraphStore, 2026-06-09); and
+the 2026-06-11 batch — tool-calling (ToolSpec / ToolCall, additive fields on
+Message / LLMResponse, a `tools=` kwarg on LLM.chat), VectorStore.delete (corpus
+freshness), the Router and Tracer Protocols (formalizing two seams that were
+previously hard-wired / duck-typed), and Verdict.revised (a rail may pass with a
+modified answer, not only block). All additive and defaulted — existing adapters
+and callers untouched. Contracts are re-frozen as of this batch; no further
+changes in flight.
 
 Rules of engagement:
 - Sync everywhere. No async at this scale; it buys nothing and costs debugging time.
@@ -104,6 +106,7 @@ class Verdict:
     passed: bool
     stage: Literal["input", "output", "judge"]
     reasons: list[str] = field(default_factory=list)
+    revised: str | None = None  # pass-with-modification (e.g. redaction); only read if passed
 
 
 @dataclass
@@ -190,6 +193,18 @@ class GraphStore(Protocol):
 
 class Retriever(Protocol):
     def retrieve(self, query: str, k: int = 5) -> list[SearchResult]: ...
+
+
+class Router(Protocol):
+    # Control-flow authority: classify a query into a route name the orchestrator
+    # dispatches on. Implementations range from keyword rules to LLM classifiers.
+    def route(self, query: str) -> str: ...
+
+
+class Tracer(Protocol):
+    # The emit seam every component traces through. TraceBus is the shipped impl;
+    # an OTel (or other) bridge satisfies this without touching any component.
+    def emit(self, component: str, event: str, **payload: Any) -> TraceEvent: ...
 
 
 class Orchestrator(Protocol):

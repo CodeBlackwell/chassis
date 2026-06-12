@@ -43,5 +43,25 @@ def test_app_layers_build_from_profile():
         retriever=s.build("retriever", embedder=embedder, store=store),
         memory=s.build("memory", embedder=embedder, store=store),
         guardrail=s.build("guardrail"),
+        router=s.build("router"),
+        llm=s.build("llm"),
     )
     assert orchestrator.handle("hello").route == "chitchat"
+
+
+def test_impl_none_builds_to_none():
+    s = Settings.load("memory")  # memory profile declares llm: {impl: none}
+    assert s.build("llm") is None
+
+
+def test_impl_none_is_env_overridable(monkeypatch):
+    monkeypatch.setenv("CHASSIS_LLM_IMPL", "ollama")
+    s = Settings.load("memory")
+    assert s.impl("llm") == "ollama"
+
+
+def test_llm_fast_alias_resolves():
+    from lib.registry import build
+
+    fast = build("llm_fast", "ollama", model="m")
+    assert type(fast).__name__ == "OllamaLLM"

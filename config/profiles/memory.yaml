@@ -1,8 +1,9 @@
 # Zero-dependency offline/CI profile: feature-hashing embedder + in-process
 # brute-force store. No keys, no services, no heavy deps.
-llm:          {impl: ollama, model: "llama3.1:8b"}
+llm:          {impl: none}   # extractive by design; CHASSIS_LLM_IMPL=ollama restores a model
 embedder:     {impl: hashing, dim: 256}
 vectorstore:  {impl: memory}
+router:       {impl: keyword}
 retriever:    {impl: simple}
 memory:       {impl: buffer, window: 8, recall_k: 3}
 guardrail:    {impl: passthrough}   # unopinionated stub; implement per project

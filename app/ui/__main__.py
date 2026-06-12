@@ -19,12 +19,17 @@ def main() -> None:
     settings = Settings.load(os.getenv("CHASSIS_PROFILE"))
     embedder = settings.build("embedder")
     store = settings.build("vectorstore")
+    llm = settings.build("llm")
+    # fast tier (judge/summary roles) falls back to the primary model when unset
+    llm_fast = settings.build("llm_fast") if "llm_fast" in settings.layers else llm
     bus = TraceBus(run_id=uuid.uuid4().hex[:8])
     orchestrator = settings.build(
         "orchestrator",
         retriever=settings.build("retriever", embedder=embedder, store=store),
-        memory=settings.build("memory", embedder=embedder, store=store),
+        memory=settings.build("memory", embedder=embedder, store=store, llm=llm_fast),
         guardrail=settings.build("guardrail"),
+        llm=llm,
+        router=settings.build("router"),
         trace=bus,
     )
 

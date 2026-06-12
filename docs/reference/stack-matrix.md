@@ -28,6 +28,10 @@ loop. They are deliberated separately — see [deliberation-layers.md](deliberat
 
 ### Control-flow authority — who picks the next step
 
+The router is a registry layer (`Router` contract): select with `router: {impl: …}` in a
+profile or `CHASSIS_ROUTER_IMPL` live; the orchestrator also takes an injected `specialists_map`
+so a new route is an entry, not an elif.
+
 | Option | Pros | Cons | Default? | Switch trigger |
 |--------|------|------|----------|----------------|
 | Rule/keyword router (code) | Zero deps, zero latency, deterministic, unit-testable accuracy | Brittle to paraphrase; ~5–10 route ceiling; keyword-bound | **Yes** | — |
@@ -255,11 +259,13 @@ The base ships a passthrough stub, not a policy — what to enforce is domain-sp
 | Guardrails AI | Validator-hub composition, sync API, failure strategies | Hub validators pull their own ML models (CPU-seconds) or need a remote-inference key | No | They want a named library |
 | NeMo / OpenAI Guardrails | Declarative/bundled rail pipelines, enterprise pedigree | Heavy deps; async-first internals fight the sync mandate; LLM self-check rails cost two extra LLM round-trips; default LLM-judge checks have been demonstrably bypassed | No | Enterprise/declarative rails are the explicit ask |
 
-> Two structural notes: (1) an LLM-judge rail must be a **different model family** than the
+> Three structural notes: (1) an LLM-judge rail must be a **different model family** than the
 > answerer — same-model judges share the guarded model's blind spots and are bypassable.
 > (2) Tool-call vetting is *not* this contract's job: per-tool policy (allowlists, approval
 > tiers, fail-closed on empty allowlist) lives at the `run_tool_loop` seam and becomes
-> mandatory at the first side-effecting tool.
+> mandatory at the first side-effecting tool. (3) A rail can pass-with-revision —
+> `Verdict(passed=True, revised=…)` replaces the answer text (redaction), keeping citations;
+> `passed=False` still withholds entirely.
 
 ## LLM eval — contract: `Evaluator`
 

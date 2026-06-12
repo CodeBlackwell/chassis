@@ -91,7 +91,7 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | `GraphEdge` | dataclass | a directed edge between two graph nodes (source_id, target_id, kind) |
 | `Turn` | dataclass | one conversational turn with a timestamp |
 | `MemoryContext` | dataclass | recent window + recalled hits + optional summary |
-| `Verdict` | dataclass | a guardrail decision (passed, stage, reasons) |
+| `Verdict` | dataclass | a guardrail decision (passed, stage, reasons, optional revised text) |
 | `EvalRow` | dataclass | one eval record (question, ground truth, answer, contexts, scores) |
 | `Answer` | dataclass | orchestrator output (text, route, citations, contexts) |
 | `TraceEvent` | dataclass | one event on the trace bus |
@@ -100,6 +100,8 @@ Shared dataclasses and Protocols live in `lib/contracts.py`.
 | `VectorStore` | Protocol | `ensure_collection`, `upsert`, `delete`, `search` |
 | `GraphStore` | Protocol | optional: `upsert(nodes, edges)`, `neighbors(node_id)` for graph-expand retrieval |
 | `Retriever` | Protocol | `retrieve(query, k) -> SearchResult[]` |
+| `Router` | Protocol | `route(query) -> str` — control-flow authority; `KeywordRouter` default, registry-selectable |
+| `Tracer` | Protocol | `emit(component, event, **payload) -> TraceEvent` — the trace seam `TraceBus` implements |
 | `Orchestrator` | Protocol | `handle(query) -> Answer` |
 | `Memory` | Protocol | `add(turn)`, `context(query) -> MemoryContext` |
 | `Guardrail` | Protocol | `check_input`, `check_output -> Verdict` |

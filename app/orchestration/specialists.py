@@ -9,14 +9,26 @@ from config import defaults
 from lib.contracts import Answer, Message
 
 if TYPE_CHECKING:
-    from lib.contracts import LLM, Retriever, SearchResult
-    from lib.trace import TraceBus
+    from typing import Protocol
+
+    from lib.contracts import LLM, Retriever, SearchResult, Tracer
+
+    class SpecialistFn(Protocol):
+        def __call__(
+            self,
+            query: str,
+            *,
+            retriever: "Retriever",
+            llm: "LLM | None",
+            trace: "Tracer | None",
+            k: int,
+        ) -> Answer: ...
 
 _NO_INFO = "I don't have information on that in the ingested documents."
 
 
 def _gather(
-    query: str, retriever: "Retriever", k: int, trace: "TraceBus | None"
+    query: str, retriever: "Retriever", k: int, trace: "Tracer | None"
 ) -> tuple[list["SearchResult"], list[str], list[str]]:
     hits = retriever.retrieve(query, k=k)
     if trace:
@@ -38,7 +50,7 @@ def answer_retrieval(
     query: str,
     retriever: "Retriever",
     llm: "LLM | None",
-    trace: "TraceBus | None",
+    trace: "Tracer | None",
     k: int = defaults.RETRIEVAL_K,
 ) -> Answer:
     hits, contexts, citations = _gather(query, retriever, k, trace)
@@ -52,7 +64,7 @@ def answer_synthesis(
     query: str,
     retriever: "Retriever",
     llm: "LLM | None",
-    trace: "TraceBus | None",
+    trace: "Tracer | None",
     k: int = defaults.RETRIEVAL_K,
 ) -> Answer:
     hits, contexts, citations = _gather(query, retriever, k, trace)
@@ -73,3 +85,45 @@ def answer_chitchat(query: str, llm: "LLM | None") -> Answer:
     if llm is None:
         return Answer(text="Hi. Ask me about the ingested documents.", route="chitchat")
     return Answer(text=llm.chat([Message("user", query)]).text, route="chitchat")
+
+
+def _chitchat(
+    query: str,
+    *,
+    retriever: "Retriever",
+    llm: "LLM | None",
+    trace: "Tracer | None",
+    k: int,
+) -> Answer:
+    return answer_chitchat(query, llm)
+
+
+def _retrieval(
+    query: str,
+    *,
+    retriever: "Retriever",
+    llm: "LLM | None",
+    trace: "Tracer | None",
+    k: int,
+) -> Answer:
+    return answer_retrieval(query, retriever, llm, trace, k)
+
+
+def _synthesis(
+    query: str,
+    *,
+    retriever: "Retriever",
+    llm: "LLM | None",
+    trace: "Tracer | None",
+    k: int,
+) -> Answer:
+    return answer_synthesis(query, retriever, llm, trace, k)
+
+
+# Route name -> uniform-signature specialist. The orchestrator dispatches on this
+# (or on a map a project injects); add a route by adding an entry, not an elif.
+SPECIALISTS: dict[str, "SpecialistFn"] = {
+    "retrieval": _retrieval,
+    "synthesis": _synthesis,
+    "chitchat": _chitchat,
+}

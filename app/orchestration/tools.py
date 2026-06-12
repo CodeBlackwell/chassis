@@ -14,8 +14,7 @@ from config import defaults
 from lib.contracts import LLMResponse, Message, ToolSpec
 
 if TYPE_CHECKING:
-    from lib.contracts import LLM
-    from lib.trace import TraceBus
+    from lib.contracts import LLM, Tracer
 
 Handler = Callable[[dict[str, Any]], str]
 
@@ -26,7 +25,7 @@ def run_tool_loop(
     tools: Sequence[ToolSpec],
     handlers: Mapping[str, Handler],
     *,
-    trace: "TraceBus | None" = None,
+    trace: "Tracer | None" = None,
     max_iters: int = defaults.TOOL_LOOP_MAX_ITERS,
 ) -> LLMResponse:
     """max_iters bounds tool rounds, not LLM calls. If the budget runs out the

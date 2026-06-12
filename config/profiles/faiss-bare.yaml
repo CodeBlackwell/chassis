@@ -2,6 +2,7 @@
 llm:          {impl: ollama, model: "llama3.1:8b"}
 embedder:     {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
 vectorstore:  {impl: faiss}           # pure lib, no service
+router:       {impl: keyword}
 retriever:    {impl: simple}
 memory:       {impl: buffer, window: 8, recall_k: 3}
 guardrail:    {impl: passthrough}   # unopinionated stub; implement per project

@@ -13,7 +13,7 @@ import time
 from collections import deque
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from config import defaults
 
@@ -48,3 +48,9 @@ class TraceBus:
         if component_prefix:
             events = [e for e in events if e.component.startswith(component_prefix)]
         return events
+
+
+if TYPE_CHECKING:
+    from lib.contracts import Tracer
+
+    _conforms: type[Tracer] = TraceBus

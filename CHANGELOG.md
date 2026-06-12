@@ -6,6 +6,22 @@ All notable changes to CHASSIS. Format follows [Keep a Changelog](https://keepac
 
 ### Added
 
+- **Extensibility-gap resolution (sanctioned between-build contract batch, 2026-06-11).**
+  Closes the gaps the matrix-vs-architecture audit found. (1) **Bug fix:** `app/ui/__main__.py`
+  and `app/api/__main__.py` never built the LLM — every profile's `llm:` line was dead and the
+  system always ran extractive; both entrypoints now wire `llm` (and `llm_fast`, falling back
+  to the primary) into the orchestrator and memory. (2) `impl: none` in a profile builds to
+  `None` — the memory profile now declares `llm: {impl: none}` (extractive by design;
+  `CHASSIS_LLM_IMPL=ollama` restores a model), preserving the zero-dep promise. (3) **Router
+  is a seam:** `Router` Protocol, `KeywordRouter` adapter, `router` registry layer + profile
+  key + env override; `DefaultOrchestrator` takes `router=`. (4) **Dict-dispatched
+  specialists:** uniform-signature `SPECIALISTS` map + injectable `specialists_map=`; unknown
+  routes fail fast. (5) **`Verdict.revised`:** a rail can pass-with-revision (redact) instead
+  of only blocking; the orchestrator honors it. (6) **`llm_fast` registry slot** for per-role
+  model tiers (judge/summary), absent-means-fallback. (7) **`Tracer` Protocol** formalizes the
+  trace seam (`TraceBus` conformance-guarded; orchestration hints flipped). 7 new tests; 86
+  total.
+
 - **Tool-calling on the LLM contract (sanctioned between-build extension, 2026-06-11).**
   `ToolSpec` + `ToolCall` dataclasses; `Message` gains a `tool` role, `tool_calls`, and
   `tool_call_id`; `LLMResponse` gains `tool_calls`; `LLM.chat` gains a `tools=` kwarg.

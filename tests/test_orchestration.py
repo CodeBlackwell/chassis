@@ -1,8 +1,9 @@
+import pytest
 from app.guardrails.guard import PassthroughGuardrail
 from app.memory.buffer import BufferMemory
 from app.orchestration import router
 from app.orchestration.orchestrator import DefaultOrchestrator
-from lib.contracts import Chunk, Verdict
+from lib.contracts import Answer, Chunk, Verdict
 from lib.embeddings.hashing import HashingEmbedder
 from lib.retriever import SimpleRetriever
 from lib.trace import TraceBus
@@ -20,7 +21,7 @@ def _seeded_retriever(embedder):
     return SimpleRetriever(embedder, store)
 
 
-def _orch(trace=None, llm=None, memory=None, guardrail=None):
+def _orch(trace=None, llm=None, memory=None, guardrail=None, **kwargs):
     embedder = HashingEmbedder(dim=512)
     return DefaultOrchestrator(
         _seeded_retriever(embedder),
@@ -28,6 +29,7 @@ def _orch(trace=None, llm=None, memory=None, guardrail=None):
         guardrail or PassthroughGuardrail(),
         llm=llm,
         trace=trace,
+        **kwargs,
     )
 
 
@@ -90,6 +92,44 @@ def test_emits_at_least_three_trace_events(tmp_path):
     assert "route_decision" in events
     assert "answer" in events
     assert len(events) >= 3
+
+
+class _AlwaysSynthesis:
+    def route(self, query):
+        return "synthesis"
+
+
+def test_injected_router_is_honored():
+    answer = _orch(router=_AlwaysSynthesis()).handle("hello there")
+    assert answer.route == "synthesis"  # default router would say chitchat
+
+
+def test_injected_specialist_map_is_honored():
+    def canned(query, *, retriever, llm, trace, k):
+        return Answer(text="canned", route="retrieval")
+
+    answer = _orch(specialists_map={"retrieval": canned}).handle("what is the trace bus")
+    assert answer.text == "canned"
+
+
+def test_unknown_route_fails_fast():
+    with pytest.raises(KeyError, match="no specialist"):
+        _orch(router=_AlwaysSynthesis(), specialists_map={"retrieval": None}).handle("x")
+
+
+class _RedactOutput:
+    def check_input(self, text):
+        return Verdict(passed=True, stage="input")
+
+    def check_output(self, answer, contexts):
+        return Verdict(passed=True, stage="output", revised="[redacted]")
+
+
+def test_revised_verdict_replaces_answer_text():
+    answer = _orch(guardrail=_RedactOutput()).handle("what is the trace bus")
+    assert answer.text == "[redacted]"
+    assert answer.route == "retrieval"
+    assert answer.citations  # provenance survives the redaction
 
 
 def test_memory_records_user_and_assistant_turns():

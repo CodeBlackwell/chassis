@@ -9,12 +9,15 @@ actually calls build() for it.
 import importlib
 from typing import Any
 
+_LLM_IMPLS = {
+    "openai": "lib.llm.openai_llm:OpenAILLM",
+    "anthropic": "lib.llm.anthropic_llm:AnthropicLLM",
+    "ollama": "lib.llm.ollama_llm:OllamaLLM",
+}
+
 REGISTRY: dict[str, dict[str, str]] = {
-    "llm": {
-        "openai": "lib.llm.openai_llm:OpenAILLM",
-        "anthropic": "lib.llm.anthropic_llm:AnthropicLLM",
-        "ollama": "lib.llm.ollama_llm:OllamaLLM",
-    },
+    "llm": _LLM_IMPLS,
+    "llm_fast": _LLM_IMPLS,  # second model slot (judge/summary tier); same impls
     "embedder": {
         "minilm": "lib.embeddings.sbert:SbertEmbedder",  # model name via kwargs
         "bge": "lib.embeddings.sbert:SbertEmbedder",
@@ -30,6 +33,9 @@ REGISTRY: dict[str, dict[str, str]] = {
     "graphstore": {
         "sqlite": "lib.graphstore.sqlite_store:SqliteGraphStore",
         "neo4j": "lib.graphstore.neo4j_store:Neo4jGraphStore",
+    },
+    "router": {
+        "keyword": "app.orchestration.router:KeywordRouter",
     },
     "retriever": {
         "simple": "lib.retriever:SimpleRetriever",

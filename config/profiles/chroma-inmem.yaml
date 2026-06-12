@@ -1,6 +1,7 @@
 llm:          {impl: anthropic, model: claude-sonnet-4-6}
 embedder:     {impl: minilm, model: sentence-transformers/all-MiniLM-L6-v2}
 vectorstore:  {impl: chroma}          # in-process, no service
+router:       {impl: keyword}
 retriever:    {impl: simple}
 memory:       {impl: buffer, window: 8, recall_k: 3}
 guardrail:    {impl: passthrough}   # unopinionated stub; implement per project
